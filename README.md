@@ -1,2 +1,3 @@
-# ASEproject
-To-Do App for globetrotters
+# Advanced Software Engineering Project
+## Team 4: To-Do App for globetrotters
+
