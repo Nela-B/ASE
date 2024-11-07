@@ -34,3 +34,14 @@ app.post('/api/tasks/create', async (req, res) => {
     res.status(500).json({ message: 'Error creating task', error });
   }
 });
+
+
+
+app.get('/api/tasks/list', async (req, res) => {
+    try {
+      const tasks = await Task.find();
+      res.status(200).json(tasks);
+    } catch (error) {
+      res.status(500).json({ message: 'Error fetching tasks', error });
+    }
+});
