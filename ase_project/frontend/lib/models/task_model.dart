@@ -1,27 +1,69 @@
 
-// task_model.dart
+// lib/models/task_model.dart
 class Task {
-  final String id;
+  final int? id;
   final String title;
-  final String description;
-  final String priority;
-  final DateTime createdAt;
+  final String? description;
+  final String deadlineType;
+  final DateTime? dueDate;
+  final bool isCompleted;
+  final String urgency;
+  final String importance;
+  final List<String>? links;
+  final List<String>? filePaths;
+  final bool notify;
+  final String frequency;
+  final int? interval;
+  final List<String>? byDay;
+  final int? byMonthDay;
+  final String recurrenceEndType;
+  final DateTime? recurrenceEndDate;
+  final int? maxOccurrences;
+  final int points;
 
   Task({
-    required this.id,
+    this.id,
     required this.title,
-    required this.description,
-    required this.priority,
-    required this.createdAt,
+    this.description,
+    required this.deadlineType,
+    this.dueDate,
+    this.isCompleted = false,
+    required this.urgency,
+    required this.importance,
+    this.links,
+    this.filePaths,
+    this.notify = false,
+    required this.frequency,
+    this.interval,
+    this.byDay,
+    this.byMonthDay,
+    required this.recurrenceEndType,
+    this.recurrenceEndDate,
+    this.maxOccurrences,
+    this.points = 0,
   });
 
   factory Task.fromJson(Map<String, dynamic> json) {
     return Task(
-      id: json['_id'],
+      id: json['id'],
       title: json['title'],
       description: json['description'],
-      priority: json['priority'],
-      createdAt: DateTime.parse(json['createdAt']),
+      deadlineType: json['deadlineType'],
+      dueDate: json['dueDate'] != null ? DateTime.parse(json['dueDate']) : null,
+      isCompleted: json['isCompleted'] ?? false,
+      urgency: json['urgency'],
+      importance: json['importance'],
+      links: json['links'] != null ? List<String>.from(json['links']) : null,
+      filePaths: json['filePaths'] != null ? List<String>.from(json['filePaths']) : null,
+      notify: json['notify'] ?? false,
+      frequency: json['frequency'],
+      interval: json['interval'],
+      byDay: json['byDay'] != null ? List<String>.from(json['byDay']) : null,
+      byMonthDay: json['byMonthDay'],
+      recurrenceEndType: json['recurrenceEndType'],
+      recurrenceEndDate: json['recurrenceEndDate'] != null ? DateTime.parse(json['recurrenceEndDate']) : null,
+      maxOccurrences: json['maxOccurrences'],
+      points: json['points'] ?? 0,
     );
   }
 }

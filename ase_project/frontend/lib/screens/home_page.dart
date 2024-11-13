@@ -7,7 +7,6 @@ import 'dart:convert';
 
 import 'package:ase_project/models/task_model.dart';
 
-
 class HomePage extends StatefulWidget {
   @override
   _TaskListScreenState createState() => _TaskListScreenState();
@@ -17,17 +16,23 @@ class _TaskListScreenState extends State<HomePage> {
   List<Task> tasks = [];
 
   Future<void> fetchTasks() async {
+  try {
     final response = await http.get(Uri.parse('http://localhost:3000/api/tasks/list'));
 
     if (response.statusCode == 200) {
       List jsonResponse = json.decode(response.body);
-      setState(() {
-        tasks = jsonResponse.map((task) => Task.fromJson(task)).toList();
-      });
+      if (mounted) { // Vérifiez si le widget est encore monté avant d'appeler setState
+        setState(() {
+          tasks = jsonResponse.map((task) => Task.fromJson(task)).toList();
+        });
+      }
     } else {
       throw Exception('Failed to load tasks');
     }
+  } catch (e) {
+    print('Error fetching tasks: $e');
   }
+}
 
   @override
   void initState() {
@@ -36,11 +41,10 @@ class _TaskListScreenState extends State<HomePage> {
   }
 
   void _navigateToCreateTask() {
-    // Navigate to the task creation screen (replace with actual route)
     Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => CreateTask())
-            );
+      context,
+      MaterialPageRoute(builder: (context) => CreateTask()),
+    );
   }
 
   void _onLeftButtonPressed() {

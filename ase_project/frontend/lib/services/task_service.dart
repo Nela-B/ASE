@@ -1,24 +1,21 @@
 import 'dart:convert';
-// ignore: depend_on_referenced_packages
 import 'package:ase_project/models/task_model.dart';
 import 'package:http/http.dart' as http;
 
 class TaskService {
   final String baseUrl = 'http://localhost:3000/api/tasks';
 
-  Future<void> createTask(String title, String description, String priority) async {
+  Future<void> createTask(Map<String, dynamic> taskData) async {
     final response = await http.post(
       Uri.parse('$baseUrl/create'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'title': title,
-        'description': description,
-        'priority': priority,
-      }),
+      body: jsonEncode(taskData),
     );
 
-    if (response.statusCode != 201) {
-      throw Exception('Failed to create task');
+    if (response.statusCode == 201) {
+      print('Task créée avec succès');
+    } else {
+      print('Erreur: ${response.body}');
     }
   }
 

@@ -1,93 +1,157 @@
-import 'package:ase_project/components/my_button.dart';
-import 'package:ase_project/components/my_textfield.dart';
-import 'package:ase_project/screens/home_page.dart';
 import 'package:flutter/material.dart';
+import '../services/task_service.dart';
 
-class CreateTask extends StatelessWidget {
-  CreateTask({super.key});
+class CreateTask extends StatefulWidget {
+  @override
+  _CreateTaskPageState createState() => _CreateTaskPageState();
+}
 
-  //text editing controllers
-  final usernameController = TextEditingController();
-  final passwordController = TextEditingController();
+class _CreateTaskPageState extends State<CreateTask> {
+  final _formKey = GlobalKey<FormState>();
+  final TaskService taskService = TaskService();
 
-  // sign user in function
-  void signUserIn(){
+  String title = '';
+  String description = '';
+  String priority = 'low';
+  String deadlineType = 'specific';
+  DateTime? dueDate;
+  String urgency = 'not urgent';
+  String importance = 'not important';
+  List<String> links = [];
+  List<String> filePaths = [];
+  bool notify = false;
+  String frequency = 'daily';
+  int interval = 1;
+  List<String> byDay = [];
+  int byMonthDay = 1;
+  String recurrenceEndType = 'never';
+  DateTime? recurrenceEndDate;
+  int maxOccurrences = 0;
+  int points = 0;
 
+  final linkController = TextEditingController();
+  final filePathController = TextEditingController();
+
+  void submitTask() async {
+    final taskData = {
+      'title': title,
+      'description': description,
+      'priority': priority,
+      'deadlineType': deadlineType,
+      'dueDate': dueDate?.toIso8601String(),
+      'urgency': urgency,
+      'importance': importance,
+      'links': links,
+      'filePaths': filePaths,
+      'notify': notify,
+      'frequency': frequency,
+      'interval': interval,
+      'byDay': byDay,
+      'byMonthDay': byMonthDay,
+      'recurrenceEndType': recurrenceEndType,
+      'recurrenceEndDate': recurrenceEndDate?.toIso8601String(),
+      'maxOccurrences': maxOccurrences,
+      'points': points,
+    };
+
+    await taskService.createTask(taskData);
+    Navigator.pop(context);
   }
 
   @override
-  Widget build(BuildContext context){
+  Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) { });
+
     return Scaffold(
-      backgroundColor: Colors.grey[300],
-      body: Column(children: [
-        const SizedBox(height: 50),
-
-        //logo
-        const Icon(
-          Icons.lock,
-          size:100,
-        ),
-
-        const SizedBox(height: 50),
-
-        //Message
-        Text(
-          'Welcome back you\'ve been missed!',
-          style: TextStyle(
-            color: Colors.grey[700],
-            fontSize: 16,),
-        ),
-
-        const SizedBox(height: 25),
-
-        //Username field
-        MyTextfield(
-          controller: usernameController,
-          hintText: 'Username',
-          obscureText: false,
-        ),
-
-        const SizedBox(height: 10),
-
-        //Password field
-        MyTextfield(
-          controller: passwordController,
-          hintText: 'Password',
-          obscureText: true,
-        ),
-
-        const SizedBox(height: 10),
-
-        //forgot password
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 25.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
+      appBar: AppBar(
+        title: Text('Create Task'),
+      ),
+      body: Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: ListView(
             children: [
-              Text(
-                'Forgot Password?',
-                style: TextStyle(color: Colors.grey[600]),
+              TextFormField(
+                decoration: InputDecoration(labelText: 'Title'),
+                onChanged: (value) => setState(() => title = value),
+                validator: (value) => value!.isEmpty ? 'Enter a title' : null,
+              ),
+              TextFormField(
+                decoration: InputDecoration(labelText: 'Description'),
+                onChanged: (value) => setState(() => description = value),
+              ),
+              DropdownButtonFormField(
+                value: frequency,
+                decoration: InputDecoration(labelText: 'Frequency'),
+                items: ['daily', 'weekly', 'monthly', 'yearly', 'custom']
+                    .map((label) => DropdownMenuItem(
+                          child: Text(label),
+                          value: label,
+                        ))
+                    .toList(),
+                onChanged: (value) => setState(() => frequency = value!),
+              ),
+              if (frequency != 'none')
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextFormField(
+                      decoration: InputDecoration(labelText: 'Interval (e.g., every N days)'),
+                      keyboardType: TextInputType.number,
+                      onChanged: (value) => setState(() => interval = int.tryParse(value) ?? 1),
+                    ),
+                    if (frequency == 'weekly')
+                      TextFormField(
+                        decoration: InputDecoration(labelText: 'Days of the week (e.g., MO, TU)'),
+                        onChanged: (value) => setState(() {
+                          byDay = value.split(',').map((day) => day.trim()).toList();
+                        }),
+                      ),
+                    if (frequency == 'monthly')
+                      TextFormField(
+                        decoration: InputDecoration(labelText: 'Day of the month (1-31)'),
+                        keyboardType: TextInputType.number,
+                        onChanged: (value) => setState(() => byMonthDay = int.tryParse(value) ?? 1),
+                      ),
+                    if (frequency == 'custom')
+                      Column(
+                        children: [
+                          TextFormField(
+                            decoration: InputDecoration(labelText: 'Custom Interval'),
+                            keyboardType: TextInputType.number,
+                            onChanged: (value) => setState(() => interval = int.tryParse(value) ?? 1),
+                          ),
+                          TextFormField(
+                            decoration: InputDecoration(labelText: 'Custom Frequency (e.g., every N weeks)'),
+                            onChanged: (value) => setState(() => frequency = value),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
+              SwitchListTile(
+                title: Text('Notify'),
+                value: notify,
+                onChanged: (value) => setState(() => notify = value),
+              ),
+              TextFormField(
+                decoration: InputDecoration(labelText: 'Points'),
+                keyboardType: TextInputType.number,
+                onChanged: (value) => setState(() => points = int.tryParse(value) ?? 0),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  if (_formKey.currentState!.validate()) {
+                    submitTask();
+                  }
+                },
+                child: Text('Create Task'),
               ),
             ],
           ),
         ),
-
-
-        const SizedBox(height: 25),
-
-        //sign in button
-        MyButton(
-          onTap: (){
-            signUserIn();
-
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => HomePage())
-            );
-          },
-        ),
-
-      ]),
+      ),
     );
   }
 }
