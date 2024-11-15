@@ -1,10 +1,8 @@
-// lib/screens/home_page.dart
 import 'package:ase_project/components/task_card.dart';
 import 'package:ase_project/screens/create_task.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
 import 'package:ase_project/models/task_model.dart';
 
 class HomePage extends StatefulWidget {
@@ -16,23 +14,22 @@ class _TaskListScreenState extends State<HomePage> {
   List<Task> tasks = [];
 
   Future<void> fetchTasks() async {
-  try {
-    final response = await http.get(Uri.parse('http://localhost:3000/api/tasks/list'));
-
-    if (response.statusCode == 200) {
-      List jsonResponse = json.decode(response.body);
-      if (mounted) { // Vérifiez si le widget est encore monté avant d'appeler setState
-        setState(() {
-          tasks = jsonResponse.map((task) => Task.fromJson(task)).toList();
-        });
+    try {
+      final response = await http.get(Uri.parse('http://localhost:3000/api/tasks/list'));
+      if (response.statusCode == 200) {
+        List jsonResponse = json.decode(response.body);
+        if (mounted) {
+          setState(() {
+            tasks = jsonResponse.map((task) => Task.fromJson(task)).toList();
+          });
+        }
+      } else {
+        throw Exception('Failed to load tasks');
       }
-    } else {
-      throw Exception('Failed to load tasks');
+    } catch (e) {
+      print('Error fetching tasks: $e');
     }
-  } catch (e) {
-    print('Error fetching tasks: $e');
   }
-}
 
   @override
   void initState() {
@@ -73,23 +70,27 @@ class _TaskListScreenState extends State<HomePage> {
         backgroundColor: Theme.of(context).primaryColor,
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(
-        shape: CircularNotchedRectangle(),
-        notchMargin: 8,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            IconButton(
-              icon: Icon(Icons.list),
-              onPressed: _onLeftButtonPressed,
+      bottomNavigationBar: LayoutBuilder(
+        builder: (context, constraints) {
+          return BottomAppBar(
+            shape: CircularNotchedRectangle(),
+            notchMargin: 8,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(
+                  icon: Icon(Icons.list),
+                  onPressed: _onLeftButtonPressed,
+                ),
+                SizedBox(width: 48), // Space for the central FAB
+                IconButton(
+                  icon: Icon(Icons.settings),
+                  onPressed: _onRightButtonPressed,
+                ),
+              ],
             ),
-            SizedBox(width: 48), // Space for the central FAB
-            IconButton(
-              icon: Icon(Icons.settings),
-              onPressed: _onRightButtonPressed,
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
