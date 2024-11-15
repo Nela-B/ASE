@@ -1,5 +1,6 @@
 import 'package:ase_project/components/task_card.dart';
 import 'package:ase_project/screens/create_task.dart';
+import 'package:ase_project/screens/task_detail_page.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -52,18 +53,33 @@ class _TaskListScreenState extends State<HomePage> {
     // Define action for the right button
   }
 
+  void _navigateToTaskDetails(Task task) {
+  print("Navigating to details of task: ${task.title}");
+  Navigator.push(
+    context,
+    MaterialPageRoute(builder: (context) => TaskDetailPage(task: task)),
+  );
+}
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Tasks')),
       body: tasks.isEmpty
           ? Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              itemCount: tasks.length,
-              itemBuilder: (context, index) {
-                return TaskCard(task: tasks[index]);
-              },
-            ),
+          :ListView.builder(
+  itemCount: tasks.length,
+  itemBuilder: (context, index) {
+    return TaskCard(
+      task: tasks[index],
+      onTap: () {
+        print("Task tapped: ${tasks[index].title}");
+        _navigateToTaskDetails(tasks[index]);
+      },
+    );
+  },
+),
+
       floatingActionButton: FloatingActionButton(
         onPressed: _navigateToCreateTask,
         child: Icon(Icons.add),
