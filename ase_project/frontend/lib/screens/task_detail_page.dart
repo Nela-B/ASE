@@ -1,24 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:ase_project/models/task_model.dart';
-import 'package:ase_project/models/subtask_model.dart';
+import 'package:ase_project/screens/edit_task_page.dart';
 
 class TaskDetailPage extends StatelessWidget {
   final Task task;
 
-  TaskDetailPage({required this.task});
+  const TaskDetailPage({super.key, required this.task});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(task.title, style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(task.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        actions: [
+          // Edit button to navigate to the edit page
+          IconButton(
+            icon: const Icon(Icons.edit),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => EditTaskPage(task: task),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Title Section
+            // Overview Section
             _buildSectionTitle("Overview"),
             _buildInfoCard(
               icon: Icons.description,
@@ -47,7 +61,7 @@ class TaskDetailPage extends StatelessWidget {
               title: "Points",
               content: "${task.points}",
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
 
             // Recurrence Section
             _buildSectionTitle("Recurrence Details"),
@@ -68,23 +82,23 @@ class TaskDetailPage extends StatelessWidget {
                   ? task.recurrenceEndDate!.toLocal().toString().split(' ')[0]
                   : "No end date",
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
 
             // Attachments Section
             if (task.links != null && task.links!.isNotEmpty) ...[
               _buildSectionTitle("Attachments"),
-              ...task.links!.map((link) => _buildAttachmentCard(link)).toList(),
+              ...task.links!.map((link) => _buildAttachmentCard(link)),
             ],
             if (task.filePaths != null && task.filePaths!.isNotEmpty) ...[
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               _buildSectionTitle("Files"),
               ...task.filePaths!
                   .map((filePath) => _buildAttachmentCard(filePath))
-                  .toList(),
+                  ,
             ],
 
-            // Completion and Subtasks
-            SizedBox(height: 16),
+            // Completion and Status
+            const SizedBox(height: 16),
             _buildSectionTitle("Status"),
             _buildInfoCard(
               icon: task.isCompleted ? Icons.check_circle : Icons.circle_outlined,
@@ -119,11 +133,11 @@ class TaskDetailPage extends StatelessWidget {
     required String content,
   }) {
     return Card(
-      margin: EdgeInsets.symmetric(vertical: 8),
+      margin: const EdgeInsets.symmetric(vertical: 8),
       elevation: 2,
       child: ListTile(
         leading: Icon(icon, size: 32, color: Colors.blue),
-        title: Text(title, style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(content),
       ),
     );
@@ -132,13 +146,13 @@ class TaskDetailPage extends StatelessWidget {
   // Helper Method: Attachment Card
   Widget _buildAttachmentCard(String attachment) {
     return Card(
-      margin: EdgeInsets.symmetric(vertical: 8),
+      margin: const EdgeInsets.symmetric(vertical: 8),
       elevation: 2,
       child: ListTile(
-        leading: Icon(Icons.attach_file, color: Colors.green),
+        leading: const Icon(Icons.attach_file, color: Colors.green),
         title: Text(
           attachment,
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: const TextStyle(fontWeight: FontWeight.bold),
           overflow: TextOverflow.ellipsis,
         ),
         onTap: () {
