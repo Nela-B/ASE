@@ -30,4 +30,31 @@ class TaskService {
       throw Exception('Failed to load tasks');
     }
   }
+
+// Update Task
+   Future<void> updateTask(String taskId, Map<String, dynamic> taskData) async {
+  final url = Uri.parse('$baseUrl/$taskId');  
+
+  try {
+    // HTTP PUT Request
+    final response = await http.put(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: json.encode(taskData), // taskData to JSON format 
+    );
+
+    if (response.statusCode == 200) {
+      print("Task updated successfully.");
+    } else {
+      print("Failed to update task. Status code: ${response.statusCode}");
+      print("Response body: ${response.body}");
+      throw Exception('Failed to update task');
+    }
+  } catch (e) {
+    print("Error while updating task: $e");
+    throw Exception("Error while updating task: $e");
+  }
+}
 }
