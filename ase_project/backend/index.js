@@ -11,8 +11,8 @@ app.listen(PORT, () => {
 
 const mongoose = require('mongoose');
 mongoose.connect('mongodb://localhost:27017/todoapp', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
+  useNewUrlParser: true, // Can be commented out if using the latest MongoDB versio
+  useUnifiedTopology: true, // Can be commented out if using the latest MongoDB versio
 }).then(() => console.log('Database connected'))
   .catch(err => console.log(err));
 
@@ -75,38 +75,47 @@ app.put('/api/tasks/:taskId', async (req, res) => {
   const { taskId } = req.params;
   const { title, description, priority, deadlineType, dueDate, urgency, importance, links, filePaths, notify, frequency, interval, byDay, byMonthDay, recurrenceEndType, recurrenceEndDate, maxOccurrences, points } = req.body;
 
-  try {
-    const mainTask = await MainTask.findById(taskId);
-
-    if (!mainTask) {
-      return res.status(404).json({ message: 'Main task not found' });
+  const taskObjectId = new mongoose.Types.ObjectId(taskId);
+  if (!title && !description && !priority) {
+    return res.status(400).json({ message: 'At least one field (title, description, priority) must be provided to update' });
+  }
+try {
+    const updatedTask = await Task.findByIdAndUpdate(
+      taskObjectId, 
+      {
+        title,
+        description,
+        priority,
+        deadlineType,
+        dueDate,
+        urgency,
+        importance,
+        links,
+        filePaths,
+        notify,
+        frequency,
+        interval,
+        byDay,
+        byMonthDay,
+        recurrenceEndType,
+        recurrenceEndDate,
+        maxOccurrences,
+        points
+      },
+      { new: true } 
+    );
+    if (!updatedTask) {
+      return res.status(404).json({ message: 'Task not found' });
     }
 
-    mainTask.title = title || mainTask.title;
-    mainTask.description = description || mainTask.description;
-    mainTask.priority = priority || mainTask.priority;
-    mainTask.deadlineType = deadlineType || mainTask.deadlineType;
-    mainTask.dueDate = dueDate || mainTask.dueDate;
-    mainTask.urgency = urgency || mainTask.urgency;
-    mainTask.importance = importance || mainTask.importance;
-    mainTask.links = links || mainTask.links;
-    mainTask.filePaths = filePaths || mainTask.filePaths;
-    mainTask.notify = notify !== undefined ? notify : mainTask.notify;
-    mainTask.frequency = frequency || mainTask.frequency;
-    mainTask.interval = interval || mainTask.interval;
-    mainTask.byDay = byDay || mainTask.byDay;
-    mainTask.byMonthDay = byMonthDay || mainTask.byMonthDay;
-    mainTask.recurrenceEndType = recurrenceEndType || mainTask.recurrenceEndType;
-    mainTask.recurrenceEndDate = recurrenceEndDate || mainTask.recurrenceEndDate;
-    mainTask.maxOccurrences = maxOccurrences || mainTask.maxOccurrences;
-    mainTask.points = points || mainTask.points;
-
-    await mainTask.save();
-    res.status(200).json(mainTask);
+    res.status(200).json(updatedTask);  
   } catch (error) {
-    res.status(500).json({ message: 'Error updating task', error });
+    console.error('Error updating task:', error);
+    res.status(500).json({ message: 'Error updating task', error: error.message });
   }
 });
+  
+
 
 // Delete a Main Task 
 app.delete('/api/tasks/:taskId', async (req, res) => {
