@@ -1,7 +1,7 @@
 
 // lib/models/task_model.dart
 class Task {
-  final int? id;
+  final String? id;
   final String title;
   final String? description;
   final String deadlineType;
@@ -66,4 +66,28 @@ class Task {
       points: json['points'] ?? 0,
     );
   }
+ Map<String, dynamic> toJson() {
+    return {
+      '_id': id,
+      'title': title,
+      'description': description,
+      'deadlineType': deadlineType,
+      'dueDate': dueDate?.toIso8601String(),
+      'isCompleted': isCompleted,
+      'urgency': urgency,
+      'importance': importance,
+      'links': links,
+      'filePaths': filePaths,
+      'notify': notify,
+      'frequency': frequency,
+      'interval': interval,
+      'byDay': byDay,
+      'byMonthDay': byMonthDay,
+      'recurrenceEndType': recurrenceEndType,
+      'recurrenceEndDate': recurrenceEndDate?.toIso8601String(),
+      'maxOccurrences': maxOccurrences,
+      'points': points,
+    };
+  }
+  
 }
