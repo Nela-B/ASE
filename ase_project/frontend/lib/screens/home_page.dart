@@ -1,10 +1,12 @@
 import 'package:ase_project/components/task_card.dart';
 import 'package:ase_project/screens/create_task.dart';
 import 'package:ase_project/screens/task_detail_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:ase_project/models/task_model.dart';
+
 
 class HomePage extends StatefulWidget {
   @override
@@ -12,6 +14,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _TaskListScreenState extends State<HomePage> {
+  final user = FirebaseAuth.instance.currentUser!;
   List<Task> tasks = [];
 
   Future<void> fetchTasks() async {
@@ -51,6 +54,12 @@ class _TaskListScreenState extends State<HomePage> {
 
   void _onRightButtonPressed() {
     // Define action for the right button
+    signUserOut();
+  }
+
+   // sign user out method
+  void signUserOut(){
+    FirebaseAuth.instance.signOut();
   }
 
   void _navigateToTaskDetails(Task task) {
@@ -64,7 +73,7 @@ class _TaskListScreenState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Tasks')),
+      appBar: AppBar(title: Text('Welcome ' + user.email!)),
       body: tasks.isEmpty
           ? Center(child: CircularProgressIndicator())
           :ListView.builder(
@@ -100,7 +109,7 @@ class _TaskListScreenState extends State<HomePage> {
                 ),
                 SizedBox(width: 48), // Space for the central FAB
                 IconButton(
-                  icon: Icon(Icons.settings),
+                  icon: Icon(Icons.logout),
                   onPressed: _onRightButtonPressed,
                 ),
               ],
