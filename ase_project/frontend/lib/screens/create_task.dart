@@ -15,6 +15,7 @@ class _CreateTaskPageState extends State<CreateTask> {
   String priority = 'low';
   String deadlineType = 'specific';
   DateTime? dueDate;
+  TimeOfDay? dueTime;  
   String urgency = 'not urgent';
   String importance = 'not important';
   List<String> links = [];
@@ -39,6 +40,7 @@ class _CreateTaskPageState extends State<CreateTask> {
       'priority': priority,
       'deadlineType': deadlineType,
       'dueDate': dueDate?.toIso8601String(),
+      'dueTime': dueTime?.format(context),
       'urgency': urgency,
       'importance': importance,
       'links': links,
@@ -56,6 +58,39 @@ class _CreateTaskPageState extends State<CreateTask> {
 
     await taskService.createTask(taskData);
     Navigator.pop(context);
+  }
+
+
+  // Function to show DatePicker and update dueDate
+  Future<void> _selectDate(BuildContext context) async {
+    DateTime selectedDate = dueDate ?? DateTime.now();
+    DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: selectedDate,
+      firstDate: DateTime(1900),
+      lastDate: DateTime(2101),
+    );
+
+    if (pickedDate != null && pickedDate != selectedDate) {
+      setState(() {
+        dueDate = pickedDate;
+      });
+    }
+  }
+
+  // Function to show TimePicker and update dueTime
+  Future<void> _selectTime(BuildContext context) async {
+    TimeOfDay selectedTime = dueTime ?? TimeOfDay.now();
+    TimeOfDay? pickedTime = await showTimePicker(
+      context: context,
+      initialTime: selectedTime,
+    );
+
+    if (pickedTime != null && pickedTime != selectedTime) {
+      setState(() {
+        dueTime = pickedTime;
+      });
+    }
   }
 
   @override
@@ -80,6 +115,46 @@ class _CreateTaskPageState extends State<CreateTask> {
               TextFormField(
                 decoration: InputDecoration(labelText: 'Description'),
                 onChanged: (value) => setState(() => description = value),
+              ),
+              // Due Date Picker Field
+              GestureDetector(
+                onTap: () => _selectDate(context),
+                child: AbsorbPointer(
+                  child: TextFormField(
+                    decoration: InputDecoration(
+                      labelText: 'Due Date',
+                      hintText: dueDate == null
+                          ? 'Select a due date'
+                          : '${dueDate!.day}/${dueDate!.month}/${dueDate!.year}',
+                      suffixIcon: Icon(Icons.calendar_today),
+                    ),
+                    controller: TextEditingController(
+                      text: dueDate == null
+                          ? ''
+                          : '${dueDate!.day}/${dueDate!.month}/${dueDate!.year}',
+                    ),
+                  ),
+                ),
+              ),
+              // Due Time Picker Field
+              GestureDetector(
+                onTap: () => _selectTime(context),
+                child: AbsorbPointer(
+                  child: TextFormField(
+                    decoration: InputDecoration(
+                      labelText: 'Due Time',
+                      hintText: dueTime == null
+                          ? 'Select a due time'
+                          : dueTime!.format(context),
+                      suffixIcon: Icon(Icons.access_time),
+                    ),
+                    controller: TextEditingController(
+                      text: dueTime == null
+                          ? ''
+                          : dueTime!.format(context),
+                    ),
+                  ),
+                ),
               ),
               DropdownButtonFormField(
                 value: frequency,
