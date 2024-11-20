@@ -1,5 +1,7 @@
 import 'package:ase_project/components/task_card.dart';
+import 'package:ase_project/screens/calendar_view_page.dart';
 import 'package:ase_project/screens/create_task.dart';
+import 'package:ase_project/screens/stat_page.dart';
 import 'package:ase_project/screens/task_detail_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -52,8 +54,23 @@ class _TaskListScreenState extends State<HomePage> {
     // Define action for the left button
   }
 
+  void _calendarButtonPressed() {
+    // Navigate to calendar view
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const CalendarViewPage()),
+    );
+  }
+
+  void _statButtonPressed() {
+    // Navigate to stat page
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const StatPage()),
+    );
+  }
+
   void _onRightButtonPressed() {
-    // Define action for the right button
     signUserOut();
   }
 
@@ -107,11 +124,20 @@ class _TaskListScreenState extends State<HomePage> {
                   icon: Icon(Icons.list),
                   onPressed: _onLeftButtonPressed,
                 ),
+                IconButton(
+                  icon: Icon(Icons.calendar_month),
+                  onPressed: _calendarButtonPressed,
+                ),
                 SizedBox(width: 48), // Space for the central FAB
+                IconButton(
+                  icon: Icon(Icons.stacked_bar_chart),
+                  onPressed: _statButtonPressed,
+                ),
                 IconButton(
                   icon: Icon(Icons.logout),
                   onPressed: _onRightButtonPressed,
                 ),
+                
               ],
             ),
           );
