@@ -132,80 +132,79 @@ class _TaskListScreenState extends State<HomePage> {
   );
 }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Welcome ' + user.email!)),
-      body: tasks.isEmpty
-          ? Center(child: CircularProgressIndicator())
-          :ListView.builder(
-  itemCount: tasks.length,
-  itemBuilder: (context, index) {
-    return TaskCard(
-      task: tasks[index],
-      onTap: () {
-        print("Task tapped: ${tasks[index].title}");
-        _navigateToTaskDetails(tasks[index]);
+ @override
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(title: Text('Welcome ' + user.email!)),
+    body: tasks.isEmpty
+        ? const Center(child: CircularProgressIndicator())
+        : ListView.builder(
+            itemCount: tasks.length,
+            itemBuilder: (context, index) {
+              final task = tasks[index]; 
+              return TaskCard(
+                task: task,
+                onTap: () {
+                  print("Task tapped: ${task.title}");
+                  _navigateToTaskDetails(task);
+                },
+                onDelete: () => _showDeleteDialog(task.id ?? ''), 
+                onCreateSubTask: () {
+                  if (task.id != null && task.id!.isNotEmpty) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            CreateSubTask(taskId: task.id!),
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Task ID is missing, cannot create subtask'),
+                      ),
+                    );
+                  }
+                },
+              );
+            },
+          ),
+    floatingActionButton: FloatingActionButton(
+      onPressed: _navigateToCreateTask,
+      child: const Icon(Icons.add),
+      backgroundColor: Theme.of(context).primaryColor,
+    ),
+    floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+    bottomNavigationBar: LayoutBuilder(
+      builder: (context, constraints) {
+        return BottomAppBar(
+          shape: const CircularNotchedRectangle(),
+          notchMargin: 8,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.list),
+                onPressed: _onLeftButtonPressed,
+              ),
+              IconButton(
+                icon: const Icon(Icons.calendar_month),
+                onPressed: _calendarButtonPressed,
+              ),
+              const SizedBox(width: 48), // Space for the central FAB
+              IconButton(
+                icon: const Icon(Icons.stacked_bar_chart),
+                onPressed: _statButtonPressed,
+              ),
+              IconButton(
+                icon: const Icon(Icons.logout),
+                onPressed: _onRightButtonPressed,
+              ),
+            ],
+          ),
+        );
       },
-        onDelete: () => _showDeleteDialog(task.id ?? ''),
-                  onCreateSubTask: () {
-                    if (task.id != null && task.id!.isNotEmpty) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              CreateSubTask(taskId: task.id!),
-                        ),
-                      );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text(
-                                'Task ID is missing, cannot create subtask')),
-                      );
-                    }
-      },
-    );
-  },
-),
-
-      floatingActionButton: FloatingActionButton(
-        onPressed: _navigateToCreateTask,
-        child: Icon(Icons.add),
-        backgroundColor: Theme.of(context).primaryColor,
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: LayoutBuilder(
-        builder: (context, constraints) {
-          return BottomAppBar(
-            shape: CircularNotchedRectangle(),
-            notchMargin: 8,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(
-                  icon: Icon(Icons.list),
-                  onPressed: _onLeftButtonPressed,
-                ),
-                IconButton(
-                  icon: Icon(Icons.calendar_month),
-                  onPressed: _calendarButtonPressed,
-                ),
-                SizedBox(width: 48), // Space for the central FAB
-                IconButton(
-                  icon: Icon(Icons.stacked_bar_chart),
-                  onPressed: _statButtonPressed,
-                ),
-                IconButton(
-                  icon: Icon(Icons.logout),
-                  onPressed: _onRightButtonPressed,
-                ),
-                
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
+    ),
+  );
+}
 }
