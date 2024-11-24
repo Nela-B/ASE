@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:ase_project/models/task_model.dart';
+import 'create_subtask.dart';
 
 
 class HomePage extends StatefulWidget {
@@ -35,6 +36,50 @@ class _TaskListScreenState extends State<HomePage> {
     } catch (e) {
       print('Error fetching tasks: $e');
     }
+  }
+
+  Future<void> deleteTask(String taskId) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('http://localhost:3000/api/tasks/delete/$taskId'),
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          tasks.removeWhere((task) => task.id == taskId);
+        });
+      } else {
+        print('Failed to delete task: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error deleting task: $e');
+    }
+  }
+
+   // Confirmation popup before deletion
+  void _showDeleteDialog(String taskId) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Delete Task"),
+          content: const Text("Are you sure you want to delete this task?"),
+          actions: [
+            TextButton(
+              child: const Text("Cancel"),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            TextButton(
+              child: const Text("Delete"),
+              onPressed: () {
+                Navigator.of(context).pop();
+                deleteTask(taskId);
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -101,6 +146,24 @@ class _TaskListScreenState extends State<HomePage> {
       onTap: () {
         print("Task tapped: ${tasks[index].title}");
         _navigateToTaskDetails(tasks[index]);
+      },
+        onDelete: () => _showDeleteDialog(task.id ?? ''),
+                  onCreateSubTask: () {
+                    if (task.id != null && task.id!.isNotEmpty) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              CreateSubTask(taskId: task.id!),
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text(
+                                'Task ID is missing, cannot create subtask')),
+                      );
+                    }
       },
     );
   },
