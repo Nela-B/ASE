@@ -182,6 +182,45 @@ class TaskService {
   // Charts Data
   final String baseUrlChart = 'http://localhost:3000/api/charts';
 
+
+  Future<Map<String, int>> getDailyPoints() async {
+    final response = await http.get(Uri.parse('$baseUrlChart/daily-points'));
+    if (response.statusCode == 200) {
+      // Convertir les données JSON en Map<String, int>
+      return Map<String, int>.from(json.decode(response.body));
+    } else {
+      print('Failed to fetch daily points. Status: ${response.statusCode}');
+      throw Exception('Failed to load daily points');
+    }
+  }
+
+
+  Future<Map<int, int>> getWeeklyPoints() async {
+    final response = await http.get(Uri.parse('$baseUrlChart/weekly-points'));
+    if (response.statusCode == 200) {
+      // Convertir les clés JSON en entiers
+      final Map<String, dynamic> rawData = json.decode(response.body);
+      return rawData.map((key, value) => MapEntry(int.parse(key), value as int));
+    } else {
+      print('Failed to fetch weekly points. Status: ${response.statusCode}');
+      throw Exception('Failed to load weekly points');
+    }
+  }
+
+
+  Future<List<Map<String, dynamic>>> getAccumulatedPoints() async {
+    final response = await http.get(Uri.parse('$baseUrlChart/accumulated-points'));
+    if (response.statusCode == 200) {
+      // La réponse doit être une liste d'objets JSON
+      return List<Map<String, dynamic>>.from(json.decode(response.body));
+    } else {
+      // Gestion des erreurs
+      print('Failed to fetch accumulated points. Status: ${response.statusCode}');
+      throw Exception('Failed to load accumulated points');
+    }
+  }
+
+
   // Monthly Points Data
   Future<Map<int, int>> getMonthlyPoints() async {
     final response = await http.get(Uri.parse('$baseUrlChart/monthly-points'));
