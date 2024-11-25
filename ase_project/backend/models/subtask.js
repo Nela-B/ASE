@@ -2,7 +2,6 @@ const mongoose = require('mongoose');
 const Errand = require('./errand.js'); 
 
 const subTaskSchema = new mongoose.Schema({
-  id: { type: Number, required: true },
   title: { type: String, required: true },
   description: String,
   deadlineType: { type: String, enum: ['specific', 'today', 'this week', 'none'], default: 'none' },
@@ -24,4 +23,4 @@ const subTaskSchema = new mongoose.Schema({
   points: { type: Number, default: 0 }
 });
 
-module.exports = mongoose.model('subTask', subTaskSchema);
+module.exports = mongoose.model('Subtask', subTaskSchema);

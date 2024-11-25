@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:ase_project/models/task_model.dart';
+import 'package:ase_project/models/subtask_model.dart';
 import 'package:http/http.dart' as http;
 
 class TaskService {
@@ -59,63 +60,28 @@ class TaskService {
   }
 
   // Update task completion status
- Future<void> updateTaskCompletion(String taskId, bool isCompleted) async {
-  final url = Uri.parse('$baseUrl/$taskId/completed'); // Ensure this matches the backend
+  Future<void> updateTaskCompletion(String taskId, bool isCompleted) async {
+    final url = Uri.parse('$baseUrl/$taskId/completed'); // Ensure this matches the backend
 
-  try {
-    final response = await http.patch(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'isCompleted': isCompleted}),
-    );
+    try {
+      final response = await http.patch(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'isCompleted': isCompleted}),
+      );
 
-    if (response.statusCode == 200) {
-      print("Task completion updated successfully.");
-    } else {
-      print("Failed to update task completion. Status code: ${response.statusCode}");
-      print("Response body: ${response.body}");
-      throw Exception('Failed to update task completion');
+      if (response.statusCode == 200) {
+        print("Task completion updated successfully.");
+      } else {
+        print("Failed to update task completion. Status code: ${response.statusCode}");
+        print("Response body: ${response.body}");
+        throw Exception('Failed to update task completion');
+      }
+    } catch (e) {
+      print("Error while updating task completion: $e");
+      throw Exception("Error while updating task completion: $e");
     }
-  } catch (e) {
-    print("Error while updating task completion: $e");
-    throw Exception("Error while updating task completion: $e");
   }
-}
-
-  // Calculate daily points for completed tasks
-  // Future<Map<DateTime, int>> getDailyPoints() async {
-  //   final tasks = await fetchTasks();
-  //   final Map<DateTime, int> dailyPoints = {};
-
-  //   for (final task in tasks) {
-  //     if (task.isCompleted && task.dueDate != null) {
-  //       final date = DateTime(
-  //         task.dueDate!.year,
-  //         task.dueDate!.month,
-  //         task.dueDate!.day,
-  //       );
-  //       dailyPoints[date] = (dailyPoints[date] ?? 0) + task.points;
-  //     }
-  //   }
-
-  //   return dailyPoints;
-  // }
-
-  // // Calculate accumulated points over time
-  // Future<List<int>> getAccumulatedPoints() async {
-  //   final tasks = await fetchTasks();
-  //   List<int> accumulatedPoints = [];
-  //   int totalPoints = 0;
- 
-  //   for (final task in tasks) {
-  //     if (task.isCompleted) {
-  //       totalPoints += task.points;
-  //       accumulatedPoints.add(totalPoints);
-  //     }
-  //   }
-
-  //   return accumulatedPoints;
-  // }
 
   // Delete a task by ID
   Future<void> deleteTask(String taskId) async {
@@ -137,72 +103,107 @@ class TaskService {
     }
   }
 
-
-// ----------------------------------------------------------------------------
-// CHARTS DATA
-// ----------------------------------------------------------------------------
-
-static const String baseUrlChart = 'http://localhost:3000/api/charts';
-
-// Daily Points Data
-  // Fetch Daily Points
-  Future<Map<String, int>> getDailyPoints() async {
-    final response = await http.get(Uri.parse('$baseUrlChart/daily-points'));
-    if (response.statusCode == 200) {
-      return Map<String, int>.from(json.decode(response.body));
-    } else {
-      throw Exception('Failed to load daily points');
+  // Create Subtask
+  Future<void> createSubTask(String taskId, Map<String, dynamic> subTaskData) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/$taskId/subtasks'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(subTaskData),
+      );
+      if (response.statusCode == 201) {
+        print('Sub-task created successfully');
+      } else {
+        print('Error: ${response.body}');
+        throw Exception('Failed to create sub-task');
+      }
+    } catch (e) {
+      print('Error creating sub-task: $e');
+      throw Exception('Error creating sub-task: $e');
     }
   }
 
-  // Accumulated Points Data
-  Future<List<Map<String, dynamic>>> getAccumulatedPoints() async {
-    final response = await http.get(Uri.parse('$baseUrlChart/accumulated-points'));
-    if (response.statusCode == 200) {
-      return List<Map<String, dynamic>>.from(json.decode(response.body));
-    } else {
-      throw Exception('Failed to load accumulated points');
+  // Fetch Subtasks
+  Future<List<SubTask>> fetchSubTasks(String taskId) async {
+    final url = Uri.parse('$baseUrl/$taskId/subtask/list');
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final List<dynamic> responseBody = json.decode(response.body);
+        return responseBody.map((item) => SubTask.fromJson(item)).toList();
+      } else {
+        print('Failed to fetch subtasks. Status code: ${response.statusCode}');
+        throw Exception('Failed to fetch subtasks');
+      }
+    } catch (e) {
+      print('Error occurred while fetching subtasks: $e');
+      throw Exception("Error occurred while fetching subtasks: $e");
     }
   }
 
-  // Weekly Points Data
-  Future<Map<int, int>> getWeeklyPoints() async {
-  final response = await http.get(Uri.parse('$baseUrlChart/weekly-points'));
-  if (response.statusCode == 200) {
-    // Parse keys as integers
-    final Map<String, dynamic> rawData = json.decode(response.body);
-    return rawData.map((key, value) => MapEntry(int.parse(key), value as int));
-  } else {
-    throw Exception('Failed to load weekly points');
-  }
-}
+  // Update Subtask
+  Future<void> updateSubTask(String subtaskId, Map<String, dynamic> updatedSubtask) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/subtasks/$subtaskId'),
+      body: json.encode(updatedSubtask),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    );
 
+    if (response.statusCode == 200) {
+      print('Subtask updated successfully');
+    } else {
+      throw Exception('Failed to update subtask');
+    }
+  }
+
+  // Delete Subtask
+  Future<void> deleteSubTask(String subtaskId) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/delete/subtask/$subtaskId'),
+      );
+
+      if (response.statusCode == 200) {
+        print('Subtask deleted successfully');
+      } else {
+        print('Failed to delete subtask. Status code: ${response.statusCode}');
+        throw Exception('Failed to delete subtask');
+      }
+    } catch (e) {
+      print('Error deleting subtask: $e');
+      throw Exception('Error deleting subtask: $e');
+    }
+  }
+
+  // Charts Data
+  final String baseUrlChart = 'http://localhost:3000/api/charts';
 
   // Monthly Points Data
   Future<Map<int, int>> getMonthlyPoints() async {
-  final response = await http.get(Uri.parse('$baseUrlChart/monthly-points'));
-  if (response.statusCode == 200) {
-    // Parse the raw response and convert keys to integers
-    final Map<String, dynamic> rawData = json.decode(response.body);
-    return rawData.map((key, value) => MapEntry(int.parse(key), value as int));
-  } else {
-    throw Exception('Failed to load monthly points');
+    final response = await http.get(Uri.parse('$baseUrlChart/monthly-points'));
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> rawData = json.decode(response.body);
+      return rawData.map((key, value) => MapEntry(int.parse(key), value as int));
+    } else {
+      throw Exception('Failed to load monthly points');
+    }
   }
-}
 
-// Comparison Data
-Future<Map<String, int>> getComparisonData() async {
-  final response = await http.get(Uri.parse('$baseUrlChart/tasks-completion'));
-  if (response.statusCode == 200) {
-    final rawData = json.decode(response.body);
-
-    // Renvoyer les totaux directement
-    return {
-      'completedBeforeDueDate': rawData['completedBeforeDueDate'] as int,
-      'completedAfterDueDate': rawData['completedAfterDueDate'] as int,
-    };
-  } else {
-    throw Exception('Failed to load comparison data');
+  // Comparison Data
+  Future<Map<String, int>> getComparisonData() async {
+    final response = await http.get(Uri.parse('$baseUrlChart/tasks-completion'));
+    if (response.statusCode == 200) {
+      final rawData = json.decode(response.body);
+      return {
+        'completedBeforeDueDate': rawData['completedBeforeDueDate'] as int,
+        'completedAfterDueDate': rawData['completedAfterDueDate'] as int,
+      };
+    } else {
+      throw Exception('Failed to load comparison data');
+    }
   }
-}
 }

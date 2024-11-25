@@ -5,8 +5,16 @@ import 'package:ase_project/services/task_service.dart';
 class TaskCard extends StatefulWidget {
   final Task task;
   final VoidCallback onTap; // Callback to handle task interactions
+  final VoidCallback onDelete; // Callback to handle task deletion
+  final VoidCallback onCreateSubTask; // Callback to handle sub-task creation
 
-  TaskCard({required this.task, required this.onTap});
+  const TaskCard({
+    super.key,
+    required this.task,
+    required this.onTap,
+    required this.onDelete,
+    required this.onCreateSubTask,
+  });
 
   @override
   _TaskCardState createState() => _TaskCardState();
@@ -47,7 +55,7 @@ class _TaskCardState extends State<TaskCard> {
     return InkWell(
       onTap: widget.onTap, // Trigger the onTap callback on tap
       child: Card(
-        margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         color: isChecked ? Colors.green[100] : Colors.red[100], // Change color based on isChecked
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -61,23 +69,35 @@ class _TaskCardState extends State<TaskCard> {
                   children: [
                     Text(
                       widget.task.title,
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     Text(
                       widget.task.description ?? "No description available",
-                      style: TextStyle(fontSize: 14),
+                      style: const TextStyle(fontSize: 14),
                     ),
                   ],
                 ),
               ),
-              // Check/Uncheck Button
-              IconButton(
-                icon: Icon(
-                  isChecked ? Icons.check_circle : Icons.radio_button_unchecked,
-                  color: isChecked ? Colors.green : Colors.red,
-                ),
-                onPressed: toggleCheck, // Handle toggle on press
+              // Actions: Check/Uncheck, Add Sub-Task, Delete Task
+              Column(
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      isChecked ? Icons.check_circle : Icons.radio_button_unchecked,
+                      color: isChecked ? Colors.green : Colors.red,
+                    ),
+                    onPressed: toggleCheck, // Handle toggle on press
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.add, color: Colors.blue),
+                    onPressed: widget.onCreateSubTask, // Handle sub-task creation
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: widget.onDelete, // Handle task deletion
+                  ),
+                ],
               ),
             ],
           ),

@@ -8,7 +8,7 @@ const taskSchema = new mongoose.Schema({
   deadlineType: { type: String, enum: ['specific', 'today', 'this week', 'none'], default: 'none' },
   dueDate: { type: Date },
   isCompleted: { type: Boolean, default: false },
-  subtasks: [SubTask.schema],  
+  subtasks: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Subtask' }],  
   urgency: { type: String, enum: ['urgent', 'not urgent'], default: 'not urgent' },
   importance: { type: String, enum: ['important', 'not important'], default: 'not important' },
   links: [String],
