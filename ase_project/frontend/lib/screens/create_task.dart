@@ -28,6 +28,7 @@ class _CreateTaskPageState extends State<CreateTask> {
   DateTime? recurrenceEndDate;
   int maxOccurrences = 0;
   int points = 0;
+  DateTime? completionDate;
 
   final linkController = TextEditingController();
   final filePathController = TextEditingController();
@@ -52,6 +53,7 @@ class _CreateTaskPageState extends State<CreateTask> {
       'recurrenceEndDate': recurrenceEndDate?.toIso8601String(),
       'maxOccurrences': maxOccurrences,
       'points': points,
+      'completionDate':completionDate,
     };
 
     await taskService.createTask(taskData);

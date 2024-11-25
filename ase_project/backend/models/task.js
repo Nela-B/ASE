@@ -21,7 +21,8 @@ const taskSchema = new mongoose.Schema({
   recurrenceEndType: { type: String, enum: ['never', 'date', 'occurrences'], default: 'never' },
   recurrenceEndDate: { type: Date },
   maxOccurrences: { type: Number },
-  points: { type: Number, default: 0 }
+  points: { type: Number, default: 0 },
+  completionDate: { type: Date },
 });
 
 module.exports = mongoose.model('Task', taskSchema);

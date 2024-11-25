@@ -66,7 +66,7 @@ class _TaskListScreenState extends State<HomePage> {
     // Navigate to stat page
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const StatPage()),
+      MaterialPageRoute(builder: (context) => StatPage()),
     );
   }
 

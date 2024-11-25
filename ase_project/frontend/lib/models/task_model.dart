@@ -6,7 +6,7 @@ class Task {
   final String? description;
   final String deadlineType;
   final DateTime? dueDate;
-  final bool isCompleted;
+  bool isCompleted;
   final String urgency;
   final String importance;
   final List<String>? links;
@@ -20,6 +20,7 @@ class Task {
   final DateTime? recurrenceEndDate;
   final int? maxOccurrences;
   final int points;
+  DateTime? completionDate;
 
   Task({
     this.id,
@@ -41,6 +42,7 @@ class Task {
     this.recurrenceEndDate,
     this.maxOccurrences,
     this.points = 0,
+    this.completionDate,
   });
 
   factory Task.fromJson(Map<String, dynamic> json) {
@@ -64,6 +66,7 @@ class Task {
       recurrenceEndDate: json['recurrenceEndDate'] != null ? DateTime.parse(json['recurrenceEndDate']) : null,
       maxOccurrences: json['maxOccurrences'],
       points: json['points'] ?? 0,
+      completionDate: json['completionDate'] != null ? DateTime.parse(json['completionDate']) : null,
     );
   }
  Map<String, dynamic> toJson() {
@@ -87,6 +90,7 @@ class Task {
       'recurrenceEndDate': recurrenceEndDate?.toIso8601String(),
       'maxOccurrences': maxOccurrences,
       'points': points,
+      'completionDate': completionDate?.toIso8601String()
     };
   }
   
