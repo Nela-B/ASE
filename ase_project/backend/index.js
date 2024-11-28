@@ -26,7 +26,7 @@ const Task = require('./models/task');
 
 // Create a new Main Task
 app.post('/api/tasks/create', async (req, res) => {
-  const { title, description, priority, deadlineType, dueDate, urgency, importance, links, filePaths, notify, frequency, interval, byDay, byMonthDay, recurrenceEndType, recurrenceEndDate, maxOccurrences, points, completionDate } = req.body;
+  const { title, description, priority, deadlineType, dueDate, dueTime, urgency, importance, links, filePaths, notify, frequency, interval, byDay, byMonthDay, recurrenceEndType, recurrenceEndDate, maxOccurrences, points, completionDate } = req.body;
 
   if (!title) {
     return res.status(400).json({ message: 'Title is required' });
@@ -39,6 +39,7 @@ app.post('/api/tasks/create', async (req, res) => {
       priority,
       deadlineType,
       dueDate,
+      dueTime,
       urgency,
       importance,
       links,

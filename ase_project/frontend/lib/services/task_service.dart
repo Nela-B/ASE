@@ -8,6 +8,12 @@ class TaskService {
 
   // Create a new task
   Future<void> createTask(Map<String, dynamic> taskData) async {
+
+      // Ensure dueDate is correctly formatted before sending
+    if (taskData['dueDate'] != null && taskData['dueDate'] is DateTime) {
+      taskData['dueDate'] = taskData['dueDate'].toIso8601String();  // Format DateTime to string
+    }
+
     final response = await http.post(
       Uri.parse('$baseUrl/create'),
       headers: {'Content-Type': 'application/json'},
@@ -22,19 +28,25 @@ class TaskService {
     }
   }
 
-  // Fetch all tasks
-  Future<List<Task>> fetchTasks() async {
+    // Fetch all tasks
+    Future<List<Task>> fetchTasks() async {
     final response = await http.get(Uri.parse('$baseUrl/list'));
 
     if (response.statusCode == 200) {
       final List<dynamic> tasksJson = json.decode(response.body);
-      return tasksJson.map((json) => Task.fromJson(json)).toList();
+
+      // This line could be causing the problem
+      return tasksJson.map((json) {
+        if (json['dueDate'] != null) {
+          json['dueDate'] = DateTime.parse(json['dueDate']);  // Parse dueDate string to DateTime
+        }
+        return Task.fromJson(json);
+      }).toList();  // Ensures we return a flat List<Task>
     } else {
       print('Error: ${response.body}');
       throw Exception('Failed to load tasks');
     }
   }
-
   // Update a task with full data
   Future<void> updateTask(String taskId, Map<String, dynamic> taskData) async {
     final url = Uri.parse('$baseUrl/$taskId');
