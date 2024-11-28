@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:ase_project/models/task_model.dart';
 import 'package:ase_project/models/subtask_model.dart';
 import 'package:ase_project/screens/edit_task_page.dart';
-import 'package:ase_project/screens/subtask_detail_page.dart'; 
+import 'package:ase_project/screens/subtask_detail_page.dart';
 import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher.dart';
+import 'package:open_file/open_file.dart';
 
 class TaskDetailPage extends StatefulWidget {
   final Task task;
@@ -24,23 +26,21 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     _fetchSubtasks();
   }
 
-  // Asynchronous method to fetch subtasks from the API
   Future<void> _fetchSubtasks() async {
-    final taskId = widget.task.id; // Fetch subtasks through taskId from the API
+    final taskId = widget.task.id;
     final url = 'http://localhost:3000/api/tasks/$taskId/subtask/list';
 
     try {
       final response = await http.get(Uri.parse(url));
 
       if (response.statusCode == 200) {
-        // Parse JSON response and convert to SubTask objects
         final data = json.decode(response.body);
         final List<SubTask> fetchedSubtasks = (data['subtasks'] as List)
             .map((subtaskData) => SubTask.fromJson(subtaskData))
             .toList();
 
         setState(() {
-          subtasks = fetchedSubtasks; // Save fetched subtasks to state
+          subtasks = fetchedSubtasks;
         });
       } else {
         throw Exception('Failed to load subtasks');
@@ -56,7 +56,6 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
       appBar: AppBar(
         title: Text(widget.task.title, style: const TextStyle(fontWeight: FontWeight.bold)),
         actions: [
-          // Edit button, navigate to edit page
           IconButton(
             icon: const Icon(Icons.edit),
             onPressed: () {
@@ -75,7 +74,6 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Overview section
             _buildSectionTitle("Overview"),
             _buildInfoCard(
               icon: Icons.description,
@@ -105,8 +103,6 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
               content: "${widget.task.points}",
             ),
             const SizedBox(height: 16),
-
-            // Recurrence section
             _buildSectionTitle("Recurrence Details"),
             _buildInfoCard(
               icon: Icons.repeat,
@@ -127,7 +123,6 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
             ),
             const SizedBox(height: 16),
 
-            // Attachments section
             if (widget.task.links != null && widget.task.links!.isNotEmpty) ...[
               _buildSectionTitle("Attachments"),
               ...widget.task.links!.map((link) => _buildAttachmentCard(link)),
@@ -138,14 +133,12 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
               ...widget.task.filePaths!.map((filePath) => _buildAttachmentCard(filePath)),
             ],
 
-            // Subtasks section
             if (subtasks.isNotEmpty) ...[
               const SizedBox(height: 16),
               _buildSectionTitle("Subtasks"),
               ...subtasks.map((subtask) => _buildSubtaskCard(subtask, context)),
             ],
 
-            // Completion and status section
             const SizedBox(height: 16),
             _buildSectionTitle("Status"),
             _buildInfoCard(
@@ -159,7 +152,6 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     );
   }
 
-  // Helper method to create section title
   Widget _buildSectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -174,7 +166,6 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     );
   }
 
-  // Helper method to create information card
   Widget _buildInfoCard({
     required IconData icon,
     required String title,
@@ -191,7 +182,6 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     );
   }
 
-  // Helper method to create attachment card
   Widget _buildAttachmentCard(String attachment) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8),
@@ -203,15 +193,33 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
           style: const TextStyle(fontWeight: FontWeight.bold),
           overflow: TextOverflow.ellipsis,
         ),
-        onTap: () {
-          // Add functionality to open the link or file
-          print("Tapped on attachment: $attachment");
+        onTap: () async {
+          if (attachment.startsWith('http')) {
+            final uri = Uri.parse(attachment);
+            if (await canLaunchUrl(uri)) {
+              await launchUrl(uri, mode: LaunchMode.externalApplication);
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Unable to open the URL'),
+                ),
+              );
+            }
+          } else {
+            final result = await OpenFile.open(attachment);
+            if (result.type != ResultType.done) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Unable to open the file: ${result.message}'),
+                ),
+              );
+            }
+          }
         },
       ),
     );
   }
 
-  // Helper method to create subtask card
   Widget _buildSubtaskCard(SubTask subtask, BuildContext context) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8),
@@ -224,7 +232,6 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
           overflow: TextOverflow.ellipsis,
         ),
         onTap: () {
-          // Navigate to subtask detail page
           Navigator.push(
             context,
             MaterialPageRoute(

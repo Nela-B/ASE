@@ -10,7 +10,6 @@ import 'dart:convert';
 import 'package:ase_project/models/task_model.dart';
 import 'create_subtask.dart';
 
-
 class HomePage extends StatefulWidget {
   @override
   _TaskListScreenState createState() => _TaskListScreenState();
@@ -19,6 +18,7 @@ class HomePage extends StatefulWidget {
 class _TaskListScreenState extends State<HomePage> {
   final user = FirebaseAuth.instance.currentUser!;
   List<Task> tasks = [];
+  String sortCriteria = "dueDate";
 
   Future<void> fetchTasks() async {
     try {
@@ -28,6 +28,7 @@ class _TaskListScreenState extends State<HomePage> {
         if (mounted) {
           setState(() {
             tasks = jsonResponse.map((task) => Task.fromJson(task)).toList();
+            _sortTasks();
           });
         }
       } else {
@@ -56,7 +57,6 @@ class _TaskListScreenState extends State<HomePage> {
     }
   }
 
-   // Confirmation popup before deletion
   void _showDeleteDialog(String taskId) {
     showDialog(
       context: context,
@@ -124,41 +124,92 @@ class _TaskListScreenState extends State<HomePage> {
     FirebaseAuth.instance.signOut();
   }
 
-  void _navigateToTaskDetails(Task task) {
-  print("Navigating to details of task: ${task.title}");
-  Navigator.push(
-    context,
-    MaterialPageRoute(builder: (context) => TaskDetailPage(task: task)),
-  );
-}
 
- @override
+  void _sortTasks() {
+    if (sortCriteria == "dueDate") {
+      tasks.sort((a, b) => (a.dueDate ?? DateTime.now()).compareTo(b.dueDate ?? DateTime.now()));
+    } else if (sortCriteria == "urgency") {
+      tasks.sort((a, b) => (b.urgency).compareTo(a.urgency));
+    }
+    setState(() {});
+  }
+
+  void _toggleSortCriteria() {
+    setState(() {
+      sortCriteria = (sortCriteria == "dueDate") ? "urgency" : "dueDate";
+      _sortTasks();
+    });
+  }
+
+  void _toggleTaskCompletion(Task task, bool isCompleted) {
+    setState(() {
+      task.isCompleted = isCompleted;
+    });
+
+    _updateTaskCompletionOnServer(task);
+  }
+
+  Future<void> _updateTaskCompletionOnServer(Task task) async {
+    try {
+      final response = await http.patch(
+        Uri.parse('http://localhost:3000/api/tasks/${task.id}/completed'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'isCompleted': task.isCompleted}),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to update task completion');
+      }
+    } catch (e) {
+      print('Error updating task completion: $e');
+    }
+  }
+
+  void _navigateToTaskDetails(Task task) {
+    print("Navigating to details of task: ${task.title}");
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => TaskDetailPage(task: task)),
+    );
+  }
+
+
+  @override
 Widget build(BuildContext context) {
   return Scaffold(
-    appBar: AppBar(title: Text('Welcome ' + user.email!)),
+    appBar: AppBar(
+      title: Text('Welcome ' + user.email!),
+      actions: [
+        IconButton(
+          icon: Icon(sortCriteria == "dueDate" ? Icons.date_range : Icons.priority_high),
+          tooltip: sortCriteria == "dueDate" ? "Sort by Urgency" : "Sort by Due Date",
+          onPressed: _toggleSortCriteria,
+        ),
+      ],
+    ),
     body: tasks.isEmpty
         ? const Center(child: CircularProgressIndicator())
         : ListView.builder(
             itemCount: tasks.length,
             itemBuilder: (context, index) {
-              final task = tasks[index]; 
+              final task = tasks[index];
               return TaskCard(
+                key: ValueKey(task.id), // Ensure proper rebuilds
                 task: task,
                 onTap: () {
                   print("Task tapped: ${task.title}");
                   _navigateToTaskDetails(task);
                 },
-                onDelete: () => _showDeleteDialog(task.id ?? ''), 
+                onDelete: () => _showDeleteDialog(task.id ?? ''),
                 onCreateSubTask: () {
                   if (task.id != null && task.id!.isNotEmpty) {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) =>
-                            CreateSubTask(taskId: task.id!),
+                        builder: (context) => CreateSubTask(taskId: task.id!),
                       ),
                     );
-                  } else {
+                    } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Task ID is missing, cannot create subtask'),
@@ -166,6 +217,7 @@ Widget build(BuildContext context) {
                     );
                   }
                 },
+                onCompletionToggle: (isCompleted) => _toggleTaskCompletion(task, isCompleted),
               );
             },
           ),
