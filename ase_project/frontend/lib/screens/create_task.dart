@@ -15,7 +15,8 @@ class _CreateTaskPageState extends State<CreateTask> {
   String description = '';
   String priority = 'low';
   String deadlineType = 'specific';
-  DateTime? dueDate;
+  DateTime? dueDate; // Field for due date
+  DateTime? dueTime; // Field for due time (separate from due date)
   String urgency = 'not urgent';
   String importance = 'not important';
   List<String> links = [];
@@ -29,50 +30,72 @@ class _CreateTaskPageState extends State<CreateTask> {
   DateTime? recurrenceEndDate;
   int maxOccurrences = 0;
   int points = 0;
+  DateTime? completionDate;
 
   final linkController = TextEditingController();
 
   void submitTask() async {
-  if (!_formKey.currentState!.validate()) return;
+    final taskData = {
+      'title': title,
+      'description': description,
+      'priority': priority,
+      'deadlineType': deadlineType,
+      'dueDate': dueDate?.toIso8601String(),
+      'dueTime': dueTime?.toIso8601String(), // Including dueTime in task data
+      'urgency': urgency,
+      'importance': importance,
+      'links': links,
+      'filePaths': filePaths,
+      'notify': notify,
+      'frequency': frequency,
+      'interval': interval,
+      'byDay': byDay,
+      'byMonthDay': byMonthDay,
+      'recurrenceEndType': recurrenceEndType,
+      'recurrenceEndDate': recurrenceEndDate?.toIso8601String(),
+      'maxOccurrences': maxOccurrences,
+      'points': points,
+      'completionDate':completionDate,
+    };
 
-  // Masquer le clavier pour éviter tout problème lié à l'UI
-  FocusScope.of(context).unfocus();
-
-  final taskData = {
-    'title': title,
-    'description': description,
-    'priority': priority,
-    'deadlineType': deadlineType,
-    'dueDate': dueDate?.toIso8601String(),
-    'urgency': urgency,
-    'importance': importance,
-    'links': links,
-    'filePaths': filePaths,
-    'notify': notify,
-    'frequency': frequency,
-    'interval': interval,
-    'byDay': byDay,
-    'byMonthDay': byMonthDay,
-    'recurrenceEndType': recurrenceEndType,
-    'recurrenceEndDate': recurrenceEndDate?.toIso8601String(),
-    'maxOccurrences': maxOccurrences,
-    'points': points,
-  };
-
-  try {
+  
     await taskService.createTask(taskData);
-    if (mounted) {
-      Navigator.pop(context); // S'assurer que le contexte est valide avant de naviguer
-    }
-  } catch (e) {
-    // Gérer les erreurs et afficher un message
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
-      );
+    Navigator.pop(context);
+
+
+  // Function to pick the due date
+  Future<void> _pickDueDate() async {
+    DateTime? selectedDate = await showDatePicker(
+      context: context,
+      initialDate: dueDate ?? DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+    );
+    if (selectedDate != null && selectedDate != dueDate) {
+      setState(() {
+        dueDate = selectedDate;
+      });
     }
   }
-}
+
+  // Function to pick the due time
+  Future<void> _pickDueTime() async {
+    TimeOfDay? selectedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(dueTime ?? DateTime.now()),
+    );
+    if (selectedTime != null) {
+      setState(() {
+        dueTime = DateTime(
+          dueDate?.year ?? DateTime.now().year,
+          dueDate?.month ?? DateTime.now().month,
+          dueDate?.day ?? DateTime.now().day,
+          selectedTime.hour,
+          selectedTime.minute,
+        );
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -94,6 +117,28 @@ class _CreateTaskPageState extends State<CreateTask> {
               TextFormField(
                 decoration: const InputDecoration(labelText: 'Description'),
                 onChanged: (value) => setState(() => description = value),
+              ),
+              // Due Date Picker
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(dueDate == null ? 'No due date set' : 'Due date: ${dueDate!.toLocal()}'),
+                  TextButton(
+                    onPressed: _pickDueDate,
+                    child: Text('Pick Date'),
+                  ),
+                ],
+              ),
+              // Due Time Picker
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(dueTime == null ? 'No due time set' : 'Due time: ${dueTime!.toLocal().hour}:${dueTime!.toLocal().minute}'),
+                  TextButton(
+                    onPressed: _pickDueTime,
+                    child: Text('Pick Time'),
+                  ),
+                ],
               ),
               DropdownButtonFormField(
                 value: frequency,
@@ -235,4 +280,5 @@ class _CreateTaskPageState extends State<CreateTask> {
       ),
     );
   }
+}
 }
