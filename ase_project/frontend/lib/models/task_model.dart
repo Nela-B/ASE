@@ -1,5 +1,5 @@
+import 'package:ase_project/models/subtask_model.dart';
 
-// lib/models/task_model.dart
 class Task {
   final String? id;
   final String title;
@@ -21,6 +21,7 @@ class Task {
   final int? maxOccurrences;
   final int points;
   DateTime? completionDate;
+  List<SubTask>? subTasks; // Added SubTask list
 
   Task({
     this.id,
@@ -43,33 +44,44 @@ class Task {
     this.maxOccurrences,
     this.points = 0,
     this.completionDate,
+    this.subTasks,  // Initialize SubTask list
   });
 
   factory Task.fromJson(Map<String, dynamic> json) {
-    return Task(
-      id: json['_id'],
-      title: json['title'],
-      description: json['description'],
-      deadlineType: json['deadlineType'],
-      dueDate: json['dueDate'] != null ? DateTime.parse(json['dueDate']) : null,
-      isCompleted: json['isCompleted'] ?? false,
-      urgency: json['urgency'],
-      importance: json['importance'],
-      links: json['links'] != null ? List<String>.from(json['links']) : null,
-      filePaths: json['filePaths'] != null ? List<String>.from(json['filePaths']) : null,
-      notify: json['notify'] ?? false,
-      frequency: json['frequency'],
-      interval: json['interval'],
-      byDay: json['byDay'] != null ? List<String>.from(json['byDay']) : null,
-      byMonthDay: json['byMonthDay'],
-      recurrenceEndType: json['recurrenceEndType'],
-      recurrenceEndDate: json['recurrenceEndDate'] != null ? DateTime.parse(json['recurrenceEndDate']) : null,
-      maxOccurrences: json['maxOccurrences'],
-      points: json['points'] ?? 0,
-      completionDate: json['completionDate'] != null ? DateTime.parse(json['completionDate']) : null,
-    );
+    try {
+      return Task(
+        id: json['_id'],
+        title: json['title'],
+        description: json['description'],
+        deadlineType: json['deadlineType'],
+        dueDate: json['dueDate'] != null ? DateTime.parse(json['dueDate']) : null,
+        isCompleted: json['isCompleted'] ?? false,
+        urgency: json['urgency'],
+        importance: json['importance'],
+        links: json['links'] != null ? List<String>.from(json['links']) : null,
+        filePaths: json['filePaths'] != null ? List<String>.from(json['filePaths']) : null,
+        notify: json['notify'] ?? false,
+        frequency: json['frequency'],
+        interval: json['interval'],
+        byDay: json['byDay'] != null ? List<String>.from(json['byDay']) : null,
+        byMonthDay: json['byMonthDay'],
+        recurrenceEndType: json['recurrenceEndType'],
+        recurrenceEndDate: json['recurrenceEndDate'] != null ? DateTime.parse(json['recurrenceEndDate']) : null,
+        maxOccurrences: json['maxOccurrences'],
+        points: json['points'] ?? 0,
+        completionDate: json['completionDate'] != null ? DateTime.parse(json['completionDate']) : null,
+        // Handle subTasks when it's null or not in the correct format
+        subTasks: json['subTasks'] != null 
+            ? List<SubTask>.from(json['subTasks'].map((task) => SubTask.fromJson(task)))
+            : [],  // Return an empty list by default
+      );
+    } catch (e) {
+      print("Error parsing Task from JSON: $e");
+      rethrow; // Log the error and rethrow
+    }
   }
- Map<String, dynamic> toJson() {
+
+  Map<String, dynamic> toJson() {
     return {
       '_id': id,
       'title': title,
@@ -90,8 +102,9 @@ class Task {
       'recurrenceEndDate': recurrenceEndDate?.toIso8601String(),
       'maxOccurrences': maxOccurrences,
       'points': points,
-      'completionDate': completionDate?.toIso8601String()
+      'completionDate': completionDate?.toIso8601String(),
+      // Include subtasks
+      'subTasks': subTasks?.map((subTask) => subTask.toJson()).toList() ?? [],  // Handle null subTasks by returning an empty list
     };
   }
-  
 }
