@@ -2,6 +2,9 @@ import 'dart:convert';
 import 'package:ase_project/models/task_model.dart';
 import 'package:ase_project/models/subtask_model.dart';
 import 'package:http/http.dart' as http;
+import 'dart:html' as html;
+import 'dart:async';
+
 
 class TaskService {
   final String baseUrl = 'http://localhost:3000/api/tasks';
@@ -257,4 +260,95 @@ class TaskService {
       throw Exception('Failed to load comparison data');
     }
   }
+
+
+Future<List<Task>> restoreTasks(String backupPath) async {
+  final url = Uri.parse('$baseUrl/restore'); // Restore API endpoint
+
+  try {
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'backupPath': backupPath}), // Include backup path
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> tasksJson = json.decode(response.body);
+
+      return tasksJson.map((json) {
+        if (json['dueDate'] != null) {
+          json['dueDate'] = DateTime.parse(json['dueDate']);
+        }
+        return Task.fromJson(json);
+      }).toList();
+    } else {
+      throw Exception('Failed to restore tasks');
+    }
+  } catch (e) {
+    throw Exception('Error while restoring tasks: $e');
+  }
+}
+
+Future<List<Task>> restoreTasksFromFile(html.File file) async {
+  final url = Uri.parse('$baseUrl/restore'); // Server restore API endpoint
+
+  // Handling the function to return a Future
+  return await _uploadFileAndRestoreTasks(file, url);
+}
+
+// Actual logic to upload the file and restore tasks
+Future<List<Task>> _uploadFileAndRestoreTasks(html.File file, Uri url) async {
+  try {
+    // Create a FormData object
+    var formData = html.FormData();
+    formData.appendBlob('backupFile', file); // Upload matching the 'backupFile' field name
+
+    // Upload the file and wait for a response
+    final completer = Completer<List<Task>>();  // Create a Completer to wait for the response
+
+    // Use HttpRequest object to upload the file
+    final request = html.HttpRequest();
+    request.open('POST', url.toString(), async: true);
+
+    // Handle response after file upload
+    request.onLoadEnd.listen((e) {
+      String responseText = request.responseText ?? '';  // Handle null as empty string
+
+      if (request.status == 200) {
+        try {
+          // Check the received JSON data from the server
+          var jsonResponse = json.decode(responseText);
+
+          // Assume the server response includes a 'tasks' array in the object
+          List tasksJson = jsonResponse['tasks'] ?? [];  // Extract the tasks array
+
+          // Complete the completer when the response is ready
+          completer.complete(
+            tasksJson.map((task) {
+              if (task['dueDate'] != null) {
+                task['dueDate'] = DateTime.parse(task['dueDate']);  // Convert 'dueDate' to DateTime if present
+              }
+              return Task.fromJson(task);  // Convert to Task object
+            }).toList()
+          );
+        } catch (e) {
+          completer.completeError('Error parsing server response');
+        }
+      } else {
+        completer.completeError('Error restoring from the server');
+      }
+    });
+
+    // Send the file to the server
+    request.send(formData);
+
+    // Wait for the completer to finish and return the result
+    return await completer.future;
+
+  } catch (e) {
+    throw Exception('Error during file restoration: $e');
+  }
+}
+
+  
 }
