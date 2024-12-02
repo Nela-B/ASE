@@ -3,11 +3,6 @@ const app = express();
 const PORT = 3000;
 
 const fs = require('fs');
-const multer = require('multer');
-const storage = multer.memoryStorage();  
-const upload = multer({ storage: storage });  
-
-
 
 app.use(express.json()); // Allows Express to parse JSON bodies
 
@@ -588,57 +583,29 @@ app.get('/api/charts/tasks-completion', async (req, res) => {
 // BACKUP Routes
 //-----------------------------------------------------------------------------------------------------------------//
 
-app.post('/api/tasks/restore', upload.single('backupFile'), async (req, res) => {
-  if (req.body.backupPath) {
-    // 1. Handling file path in a Windows environment (when a backup path is provided)
-    try {
-      const backupData = await fs.promises.readFile(req.body.backupPath, 'utf-8');
-      const tasks = JSON.parse(backupData);
+app.post('/api/tasks/restore', async (req, res) => {
+  const { backupPath } = req.body;
 
-      if (!tasks || !Array.isArray(tasks)) {
-        return res.status(400).json({ message: 'Invalid backup data format' });
-      }
-      tasks.forEach(task => delete task._id); // Remove _id to avoid duplicate key errors
-      const restoredTasks = await Task.insertMany(tasks);
-      return res.status(200).json({ message: 'Tasks restored from backup path', tasks: restoredTasks });
-    } catch (error) {
-      console.error('Error reading backup file from path:', error);
-      return res.status(500).json({ message: 'Error restoring tasks from path', error: error.message });
-    }
+  if (!backupPath) {
+    return res.status(400).json({ message: 'Backup path is required' });
   }
 
-  if (req.file) {
-    // 2. Handling file upload
-    try {
-      const backupData = req.file.buffer.toString('utf-8');
-      console.log('Uploaded backup file content:', backupData);
-      const tasks = JSON.parse(backupData);
+  try {
+    // Read data from the backup file path
+    const backupData = fs.readFileSync(backupPath, 'utf8'); // Read the JSON file as a string
+    const tasks = JSON.parse(backupData); // Convert the string to a JSON object
 
-      if (!tasks || !Array.isArray(tasks)) {
-        return res.status(400).json({ message: 'Invalid backup data format' });
-      }
+    // Delete all existing data and insert new data
+    await Task.deleteMany({}); // Delete existing tasks (optional)
 
-      const ids = tasks.map(task => task._id);
-      const existingTasks = await Task.find({ _id: { $in: ids } }).select('_id');
-      const existingIds = new Set(existingTasks.map(task => task._id.toString()));
+    // Insert the restored task list into the database
+    await Task.insertMany(tasks, { ordered: false });
 
-      // Filter out the new tasks to insert
-      const tasksToInsert = tasks.filter(task => !existingIds.has(task._id.toString()));
-
-      if (tasksToInsert.length === 0) {
-        return res.status(200).json({ message: 'No new tasks to restore' });
-      }
-
-      const restoredTasks = await Task.insertMany(tasksToInsert, { ordered: false });
-      return res.status(200).json({ message: 'Tasks restored from uploaded file', tasks: restoredTasks });
-    } catch (error) {
-      console.error('Error restoring tasks from uploaded file:', error);
-      return res.status(500).json({ message: 'Error restoring tasks from uploaded file', error: error.message });
-    }
+    // Retrieve the restored task list
+    const restoredTasks = await Task.find(); // Get the restored tasks list
+    return res.status(200).json(restoredTasks); // Return the restored tasks list
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Error restoring tasks', error: error.message });
   }
-
-  return res.status(400).json({ message: 'Either backup path or backup file is required' });
 });
-
-
-
