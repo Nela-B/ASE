@@ -31,7 +31,8 @@ dependencies:
   flutter:
     sdk: flutter
   table_calendar: ^3.0.3 # Latest version available
-
+  flutter_local_notifications: ^15.0.0
+  timezone: ^0.9.0
   charts_flutter: ^0.12.0
 
   # The following adds the Cupertino Icons font to your application.
