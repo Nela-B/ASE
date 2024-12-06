@@ -137,25 +137,31 @@ class TaskService {
     }
   }
 
-  // Fetch Subtasks
   Future<List<SubTask>> fetchSubTasks(String taskId) async {
-    final url = Uri.parse('$baseUrl/$taskId/subtask/list');
+  final url = Uri.parse('$baseUrl/$taskId/subtask/list');
 
-    try {
+  try {
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
-        final List<dynamic> responseBody = json.decode(response.body);
-        return responseBody.map((item) => SubTask.fromJson(item)).toList();
+        final responseBody = json.decode(response.body);
+
+        if (responseBody is Map<String, dynamic> &&
+            responseBody.containsKey('subtasks')) {
+          return (responseBody['subtasks'] as List)
+              .map((item) => SubTask.fromJson(item))
+              .toList();
+        } else {
+          throw Exception('Unexpected response format: ${response.body}');
+        }
       } else {
-        print('Failed to fetch subtasks. Status code: ${response.statusCode}');
         throw Exception('Failed to fetch subtasks');
       }
     } catch (e) {
-      print('Error occurred while fetching subtasks: $e');
       throw Exception("Error occurred while fetching subtasks: $e");
-    }
   }
+}
+
 
   // Update Subtask
   Future<void> updateSubTask(String subtaskId, Map<String, dynamic> updatedSubtask) async {
@@ -171,6 +177,31 @@ class TaskService {
       print('Subtask updated successfully');
     } else {
       throw Exception('Failed to update subtask');
+    }
+  }
+
+
+  // Update subtask completion status
+  Future<void> updateSubTaskCompletion(String subtaskId, bool isCompleted) async {
+    final url = Uri.parse('http://localhost:3000/api/subtasks/$subtaskId/completed'); // Ensure this matches the backend
+
+    try {
+      final response = await http.patch(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'isCompleted': isCompleted}),
+      );
+
+      if (response.statusCode == 200) {
+        print("Subtask completion updated successfully.");
+      } else {
+        print("Failed to update subtask completion. Status code: ${response.statusCode}");
+        print("Response body: ${response.body}");
+        throw Exception('Failed to update subtask completion');
+      }
+    } catch (e) {
+      print("Error while updating subtask completion: $e");
+      throw Exception("Error while updating subtask completion: $e");
     }
   }
 

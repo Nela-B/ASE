@@ -6,7 +6,7 @@ class SubTask {
   final String description;
   final String deadlineType;
   final DateTime? dueDate;
-  final bool isCompleted;
+  bool isCompleted;
   final String urgency;
   final String importance;
   final List<String> links; 

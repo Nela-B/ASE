@@ -320,6 +320,43 @@ app.delete('/api/tasks/delete/subtask/:subTaskId', async (req, res) => {
 });
 
 
+// Update the isCompleted attribute of a subtask
+app.patch('/api/subtasks/:subtaskId/completed', async (req, res) => {
+  const { subtaskId } = req.params;
+  const { isCompleted } = req.body; // Get isCompleted value from request body
+
+  if (typeof isCompleted !== 'boolean') {
+    return res.status(400).json({ message: 'isCompleted must be a boolean value' });
+  }
+
+  try {
+    const subtaskObjectId = new mongoose.Types.ObjectId(subtaskId); // Convert taskId to ObjectId if needed
+
+    // Update fields based on isCompleted value
+    const updateFields = {
+      isCompleted,
+      completionDate: isCompleted ? new Date() : null, // Set to current date or reset to null
+    };
+
+    const updatedSubTask = await SubTask.findByIdAndUpdate(
+      subtaskObjectId,
+      updateFields, // Update isCompleted and completionDate fields
+      { new: true } // Return the updated document
+    );
+
+    if (!updatedSubTask) {
+      return res.status(404).json({ message: 'SubTask not found' });
+    }
+
+    res.status(200).json(updatedSubTask); // Send the updated task in response
+  } catch (error) {
+    console.error('Error updating subtask completion:', error);
+    res.status(500).json({ message: 'Error updating subtask completion', error: error.message });
+  }
+});
+
+
+
 //-----------------------------------------------------------------------------------------------------------------//
 // Errand Routes
 //-----------------------------------------------------------------------------------------------------------------//

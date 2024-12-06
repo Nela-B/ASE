@@ -61,6 +61,22 @@ class _TaskListScreenState extends State<HomePage> {
     }
   }
 
+  Future<void> _refreshTaskWithSubtasks(Task task) async {
+  try {
+    final updatedSubtasks = await TaskService().fetchSubTasks(task.id!);
+
+    setState(() {
+      task.subTasks = updatedSubtasks; // Mettre à jour localement les sous-tâches
+    });
+  } catch (e) {
+    print('Error refreshing task with subtasks: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Failed to refresh subtasks.')),
+    );
+  }
+}
+
+
   void _showDeleteDialog(String taskId) {
     showDialog(
       context: context,
@@ -219,12 +235,20 @@ Future<void> _backupTasks(BuildContext context) async {
     fetchTasks();
   }
 
-  void _navigateToCreateTask() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => CreateTask()),
-    );
+  Future<void> _navigateToCreateTask() async {
+    final newTask = await Navigator.push(
+    context,
+    MaterialPageRoute(builder: (context) => CreateTask()),
+  );
+
+  if (newTask != null) {
+    setState(() {
+      tasks.add(Task.fromJson(newTask)); // Ajoute la nouvelle tâche à la liste
+      _sortTasks(); // Trie les tâches selon le critère actuel
+    });
   }
+}
+  
 
   void _onLeftButtonPressed() {
     // Define action for the left button
@@ -334,31 +358,30 @@ Widget build(BuildContext context) {
             itemBuilder: (context, index) {
               final task = tasks[index];
               return TaskCard(
-                key: ValueKey(task.id), // Ensure proper rebuilds
-                task: task,
-                onTap: () {
-                  print("Task tapped: ${task.title}");
-                  _navigateToTaskDetails(task);
-                },
-                onDelete: () => _showDeleteDialog(task.id ?? ''),
-                onCreateSubTask: () {
-                  if (task.id != null && task.id!.isNotEmpty) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => CreateSubTask(taskId: task.id!),
-                      ),
-                    );
-                    } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Task ID is missing, cannot create subtask'),
-                      ),
-                    );
-                  }
-                },
-                onCompletionToggle: (isCompleted) => _toggleTaskCompletion(task, isCompleted),
-              );
+  key: ValueKey(task.id), // Ensure proper rebuilds
+  task: task,
+  onTap: () {
+    print("Task tapped: ${task.title}");
+    _navigateToTaskDetails(task);
+  },
+  onDelete: () => _showDeleteDialog(task.id ?? ''),
+  onCreateSubTask: () async {
+  if (task.id != null && task.id!.isNotEmpty) {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CreateSubTask(taskId: task.id!),
+      ),
+    );
+
+    if (result != null && result == true) {
+      await _refreshTaskWithSubtasks(task); // Rafraîchit les sous-tâches
+    }
+  }
+},
+  onCompletionToggle: (isCompleted) => _toggleTaskCompletion(task, isCompleted), // Ajoutez cette ligne !
+);
+
             },
           ),
     floatingActionButton: FloatingActionButton(

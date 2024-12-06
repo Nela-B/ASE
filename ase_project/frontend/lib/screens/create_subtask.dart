@@ -67,7 +67,7 @@ class _CreateSubTaskPageState extends State<CreateSubTask> {
     try {
       await taskService.createSubTask(widget.taskId, subTaskData);  // Request to add subtask to the server
       print("Sub-task added successfully");
-      Navigator.pop(context);  // Close the screen after successful creation
+      Navigator.pop(context, true);  // Close the screen after successful creation
     } catch (e) {
       print("Error adding sub-task: $e");
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error adding subtask: $e')));

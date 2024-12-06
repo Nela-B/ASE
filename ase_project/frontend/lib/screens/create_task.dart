@@ -60,7 +60,7 @@ class _CreateTaskPageState extends State<CreateTask> {
 
     try {
       await taskService.createTask(taskData);
-      Navigator.pop(context);
+      Navigator.pop(context, taskData);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: ${e.toString()}')),
