@@ -293,31 +293,54 @@ class TaskService {
 
 
 Future<List<Task>> restoreTasks(String backupPath) async {
-  final url = Uri.parse('$baseUrl/restore'); // Restore API endpoint
+    final url = Uri.parse('$baseUrl/restore'); // Restore API endpoint
 
-  try {
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'backupPath': backupPath}), // Include backup path
-    );
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'backupPath': backupPath}), // Include backup path
+      );
 
-    if (response.statusCode == 200) {
-      final List<dynamic> tasksJson = json.decode(response.body);
+      if (response.statusCode == 200) {
+        final List<dynamic> tasksJson = json.decode(response.body);
 
-      return tasksJson.map((json) {
-        if (json['dueDate'] != null) {
-          json['dueDate'] = DateTime.parse(json['dueDate']);
-        }
-        return Task.fromJson(json);
-      }).toList();
-    } else {
-      throw Exception('Failed to restore tasks');
+        return tasksJson.map((json) {
+          // Handle 'dueDate' conversion
+          if (json['dueDate'] != null && json['dueDate'] is String) {
+            try {
+              json['dueDate'] = DateTime.parse(json['dueDate']);
+            } catch (e) {
+              json['dueDate'] = null; // If parsing fails, set as null
+            }
+          } else {
+            json['dueDate'] =
+                null; // If 'dueDate' is null or not a string, set as null
+          }
+
+          // Handle 'completionDate' conversion
+          if (json['completionDate'] != null &&
+              json['completionDate'] is String) {
+            try {
+              json['completionDate'] = DateTime.parse(json['completionDate']);
+            } catch (e) {
+              json['completionDate'] = null; // If parsing fails, set as null
+            }
+          } else {
+            json['completionDate'] =
+                null; // If 'completionDate' is null or not a string, set as null
+          }
+
+          // Now return Task object
+          return Task.fromJson(json);
+        }).toList();
+      } else {
+        throw Exception('Failed to restore tasks');
+      }
+    } catch (e) {
+      throw Exception('Error while restoring tasks: $e');
     }
-  } catch (e) {
-    throw Exception('Error while restoring tasks: $e');
   }
-}
 
 
   
