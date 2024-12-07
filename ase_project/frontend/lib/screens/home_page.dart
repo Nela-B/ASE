@@ -10,8 +10,8 @@ import 'dart:convert';
 import 'package:ase_project/models/task_model.dart';
 import 'create_subtask.dart';
 import 'dart:io';
-import 'package:ase_project/models/subtask_model.dart';
 import 'package:ase_project/services/task_service.dart';
+import 'package:file_picker/file_picker.dart';
 
 
 class HomePage extends StatefulWidget {
@@ -102,11 +102,12 @@ class _TaskListScreenState extends State<HomePage> {
     );
   }
 
-  List<Task> selectedTasks = [];
+ List<Task> selectedTasks = [];
 
-Future<void> _backupTasks(BuildContext context) async {
+  Future<void> _backupTasks(BuildContext context) async {
     try {
       // If no tasks are selected, backup all tasks, otherwise, backup selected tasks
+
       List<Task> tasksToBackup = selectedTasks.isEmpty ? tasks : selectedTasks;
 
       if (tasksToBackup.isEmpty) {
@@ -116,69 +117,44 @@ Future<void> _backupTasks(BuildContext context) async {
         return;
       }
 
-      // Fetch subtasks for each task before backup
-      List<Task> tasksWithSubtasks = [];
-      for (var task in tasksToBackup) {
-        try {
-          final response = await http.get(
-            Uri.parse('localhost:3000/api/tasks/${task.id}/subtask/list'),
-          );
-
-          if (response.statusCode == 200) {
-            final jsonResponse = json.decode(response.body);
-
-            // If the response is a Map, extract the 'subtasks' key
-            if (jsonResponse is Map<String, dynamic> &&
-                jsonResponse.containsKey('subtasks')) {
-              List subtasks = jsonResponse['subtasks'];
-              print('Successfully fetched subtasks for task ID: ${task.id}');
-              print('Subtask content: ${subtasks}');
-
-              // Convert subtasks to SubTask model
-              task.subTasks =
-                  subtasks.map((subtask) => SubTask.fromJson(subtask)).toList();
-
-              // Debugging: Check if subtasks are properly assigned
-              print('Assigned subtasks: ${task.subTasks}');
-            } else {
-              throw Exception('Subtask information is in an incorrect format.');
-            }
-          } else {
-            throw Exception('Failed to fetch subtasks');
-          }
-        } catch (e) {
-          print('Error fetching subtasks for task ${task.id}: $e');
-        }
-
-        tasksWithSubtasks.add(task);
-      }
-
-      // Convert tasks and their subtasks to JSON
-      final taskJsonList = tasksWithSubtasks.map((task) {
-        return task.toJson(); // Convert to JSON, including subtasks
+      // Convert tasks to JSON (no subtasks involved now)
+      final taskJsonList = tasksToBackup.map((task) {
+        return task.toJson(); // Convert each task to JSON
       }).toList();
 
-      final taskJsonString = json.encode(taskJsonList);
+      final taskJsonString =
+          json.encode(taskJsonList); // Convert list to JSON string
+
       // Handle backup to local file system for mobile/desktop environments
       final directory = Directory.current;
       final backupDir = Directory('${directory.path}/lib/backup');
 
+      // Ensure the backup directory exists
       if (!await backupDir.exists()) {
         await backupDir.create(
             recursive: true); // Create directory if it doesn't exist
       }
 
-      final filePath =
-          '${backupDir.path}/${selectedTasks.isEmpty ? 'tasks' : 'selected_tasks'}_backup.json';
+      // Generate a unique filename based on the current time and selection type
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final fileName =
+          '${selectedTasks.isEmpty ? 'tasks' : 'selected_tasks'}_backup_$timestamp.json';
+      final filePath = '${backupDir.path}/$fileName';
       final file = File(filePath);
 
       // Save JSON data to the file
       await file.writeAsString(taskJsonString);
 
+      // Show a success message
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tasks backed up locally!')),
+        SnackBar(
+          content: Text('${tasksToBackup.length} task(s) backed up locally!'),
+        ),
       );
+
+      print('Backup completed for ${tasksToBackup.length} task(s).');
     } catch (e) {
+      // Handle any error during backup
       print('Error during backup: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Error during backup.')),
@@ -186,7 +162,7 @@ Future<void> _backupTasks(BuildContext context) async {
     }
   }
 
-  // Function to toggle task selection
+// Function to toggle task selection
   void _toggleTaskSelection(Task task) {
     setState(() {
       if (selectedTasks.contains(task)) {
@@ -197,36 +173,59 @@ Future<void> _backupTasks(BuildContext context) async {
     });
   }
 
-    Future<void> _restoreTasks() async {
-    try {
-      // Handle restore tasks from server for mobile/desktop environments
-      final directory = Directory.current;
-      final backupDir = Directory('${directory.path}/lib/backup');
-      final backupFilePath = '${backupDir.path}/tasks_backup.json';
+   Future<void> _restoreTasks() async {
+  try {
+    // Show file picker UI
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.any,
+      // type: FileType.custom,
+      // allowedExtensions: ['json', 'JSON'],
+    );
 
-      try {
-        List<Task> restoredTasks =
-            await TaskService().restoreTasks(backupFilePath);
-
-        setState(() {
-          tasks = restoredTasks; // Refresh task list with restored tasks
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Tasks restored successfully!')),
-        );
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error restoring from server: $e')),
-        );
-      }
-    } catch (e) {
-      print('Error during restore: $e');
+    if (result == null) {
+      // If no file was selected
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error during restore.')),
+        const SnackBar(content: Text('No file selected for restore.')),
+      );
+      return;
+    }
+
+    // Get the selected file path
+    String? backupFilePath = result.files.single.path;
+
+    if (backupFilePath == null) {
+      // If the file path is invalid
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Invalid file path')),
+      );
+      return;
+    }
+
+    // Restore from the selected file
+    try {
+      List<Task> restoredTasks =
+          await TaskService().restoreTasks(backupFilePath);
+
+      setState(() {
+        tasks = restoredTasks; // Update task list with restored tasks
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tasks restored successfully!')),
+      );
+    } catch (e) {
+      // Error during restore
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error restoring from file: $e')),
       );
     }
+  } catch (e) {
+    print('Error during restore: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Error during restore.')),
+    );
   }
+}
 
 
   @override
