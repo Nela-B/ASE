@@ -632,15 +632,29 @@ app.post('/api/tasks/restore', async (req, res) => {
     const backupData = fs.readFileSync(backupPath, 'utf8'); // Read the JSON file as a string
     const tasks = JSON.parse(backupData); // Convert the string to a JSON object
 
-    // Delete all existing data and insert new data
-    await Task.deleteMany({}); // Delete existing tasks (optional)
+    // Initialize an array to hold updated tasks
+    const updatedTasks = [];
 
-    // Insert the restored task list into the database
-    await Task.insertMany(tasks, { ordered: false });
+    // Loop through the tasks in the backup data and either update or insert them
+    for (const task of tasks) {
+      // Try to find the task by its unique identifier (e.g., id)
+      const existingTask = await Task.findOne({ _id: task._id });
 
-    // Retrieve the restored task list
-    const restoredTasks = await Task.find(); // Get the restored tasks list
-    return res.status(200).json(restoredTasks); // Return the restored tasks list
+      if (existingTask) {
+        // If the task already exists, update it
+        Object.assign(existingTask, task);  // Merge the existing task with the backup data
+        await existingTask.save();  // Save the updated task
+        updatedTasks.push(existingTask);
+      } else {
+        // If the task does not exist, create a new one
+        const newTask = new Task(task);
+        await newTask.save();  // Insert the new task into the database
+        updatedTasks.push(newTask);
+      }
+    }
+
+    // Return the updated tasks list
+    return res.status(200).json(updatedTasks); // Return the updated or newly added tasks list
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: 'Error restoring tasks', error: error.message });
