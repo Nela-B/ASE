@@ -18,7 +18,7 @@ class Task {
   final int? byMonthDay;
   final String recurrenceEndType;
   final DateTime? recurrenceEndDate;
-  final int? maxOccurrences;
+  late final int? maxOccurrences;
   final int points;
   DateTime? completionDate;
   List<SubTask>? subTasks; // Added SubTask list
@@ -44,7 +44,7 @@ class Task {
     this.maxOccurrences,
     this.points = 0,
     this.completionDate,
-    this.subTasks,  // Initialize SubTask list
+    this.subTasks, // Initialize SubTask list
   });
 
   factory Task.fromJson(Map<String, dynamic> json) {
@@ -54,26 +54,39 @@ class Task {
         title: json['title'],
         description: json['description'],
         deadlineType: json['deadlineType'],
-        dueDate: json['dueDate'] != null ? DateTime.parse(json['dueDate']) : null,
+        // Handle 'dueDate' conversion
+        dueDate: json['dueDate'] != null && json['dueDate'] is String
+            ? DateTime.parse(json['dueDate'])
+            : null,
         isCompleted: json['isCompleted'] ?? false,
         urgency: json['urgency'],
         importance: json['importance'],
         links: json['links'] != null ? List<String>.from(json['links']) : null,
-        filePaths: json['filePaths'] != null ? List<String>.from(json['filePaths']) : null,
+        filePaths: json['filePaths'] != null
+            ? List<String>.from(json['filePaths'])
+            : null,
         notify: json['notify'] ?? false,
         frequency: json['frequency'],
         interval: json['interval'],
         byDay: json['byDay'] != null ? List<String>.from(json['byDay']) : null,
         byMonthDay: json['byMonthDay'],
         recurrenceEndType: json['recurrenceEndType'],
-        recurrenceEndDate: json['recurrenceEndDate'] != null ? DateTime.parse(json['recurrenceEndDate']) : null,
-        maxOccurrences: json['maxOccurrences'],
+        recurrenceEndDate: json['recurrenceEndDate'] != null &&
+                json['recurrenceEndDate'] is String
+            ? DateTime.parse(json['recurrenceEndDate'])
+            : null,
+        maxOccurrences: json['maxOccurrences'] ?? 1,
         points: json['points'] ?? 0,
-        completionDate: json['completionDate'] != null ? DateTime.parse(json['completionDate']) : null,
-        // Handle subTasks when it's null or not in the correct format
-        subTasks: json['subTasks'] != null 
-            ? List<SubTask>.from(json['subTasks'].map((task) => SubTask.fromJson(task)))
-            : [],  // Return an empty list by default
+        // Handle 'completionDate' conversion
+        completionDate:
+            json['completionDate'] != null && json['completionDate'] is String
+                ? DateTime.parse(json['completionDate'])
+                : null,
+        // Handle subTasks if they exist
+        subTasks: json['subTasks'] != null
+            ? List<SubTask>.from(
+                json['subtasks'].map((task) => SubTask.fromJson(task)))
+            : [], // Return an empty list if no subTasks
       );
     } catch (e) {
       print("Error parsing Task from JSON: $e");
@@ -104,7 +117,8 @@ class Task {
       'points': points,
       'completionDate': completionDate?.toIso8601String(),
       // Include subtasks
-      'subTasks': subTasks?.map((subTask) => subTask.toJson()).toList() ?? [],  // Handle null subTasks by returning an empty list
+      'subTasks': subTasks?.map((subTask) => subTask.toJson()).toList() ??
+          [], // Handle null subTasks by returning an empty list
     };
   }
 }
