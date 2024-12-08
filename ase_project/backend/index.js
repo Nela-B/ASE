@@ -28,7 +28,29 @@ const Task = require('./models/task');
 
 // Create a new Main Task
 app.post('/api/tasks/create', async (req, res) => {
-  const { title, description, priority, deadlineType, dueDate, dueTime, urgency, importance, links, filePaths, notify, frequency, interval, byDay, byMonthDay, recurrenceEndType, recurrenceEndDate, maxOccurrences, points, completionDate } = req.body;
+  const {
+    title,
+    description,
+    priority,
+    deadlineType,
+    dueDate,
+    dueTime,
+    urgency,
+    importance,
+    links,
+    filePaths,
+    notify,
+    frequency,
+    interval,
+    byDay,
+    byMonthDay,
+    recurrenceEndType,
+    recurrenceEndDate,
+    maxOccurrences,
+    points,
+    completionDate,
+    subTasks, // Include subtasks in the payload
+  } = req.body;
 
   if (!title) {
     return res.status(400).json({ message: 'Title is required' });
@@ -55,15 +77,29 @@ app.post('/api/tasks/create', async (req, res) => {
       recurrenceEndDate,
       maxOccurrences,
       points,
-      completionDate
+      completionDate,
     });
+
+    // Process and attach subtasks if provided
+    if (subTasks && Array.isArray(subTasks)) {
+      const savedSubTasks = await Promise.all(
+        subTasks.map(async (subTask) => {
+          const newSubTask = new SubTask(subTask); // Create subtask document
+          await newSubTask.save(); // Save subtask in the database
+          return newSubTask._id; // Return the subtask ID
+        })
+      );
+      mainTask.subtasks = savedSubTasks; // Add subtask IDs to the main task
+    }
 
     await mainTask.save();
     res.status(201).json(mainTask);
   } catch (error) {
+    console.error('Error creating task:', error);
     res.status(500).json({ message: 'Error creating task', error });
   }
 });
+
 
 // Get all tasks
 app.get('/api/tasks/list', async (req, res) => {

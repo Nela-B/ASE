@@ -3,6 +3,7 @@ import 'package:ase_project/screens/calendar_view_page.dart';
 import 'package:ase_project/screens/create_task.dart';
 import 'package:ase_project/screens/stat_page.dart';
 import 'package:ase_project/screens/task_detail_page.dart';
+import 'package:ase_project/screens/trip_planner.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -251,6 +252,10 @@ class _TaskListScreenState extends State<HomePage> {
 
   void _onLeftButtonPressed() {
     // Define action for the left button
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => TripPlannerPage()),
+    );
   }
 
   void _calendarButtonPressed() {

@@ -14,7 +14,7 @@ const taskSchema = new mongoose.Schema({
   links: [String],
   filePaths: [String],
   notify: { type: Boolean, default: false },
-  frequency: { type: String, enum: ['daily', 'weekly', 'monthly', 'yearly', 'custom'], default: 'none' },
+  frequency: { type: String, enum: ['daily', 'weekly', 'monthly', 'yearly', 'custom', 'none'], default: 'none' },
   interval: { type: Number },
   byDay: { type: [String] },
   byMonthDay: { type: Number },

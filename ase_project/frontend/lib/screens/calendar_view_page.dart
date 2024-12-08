@@ -143,6 +143,9 @@ class _CalendarViewPageState extends State<CalendarViewPage> {
         // Set interval as interval * 365 days, e.g., repeat every 2 years
         interval = interval * 365;
         break;
+      // case 'none':
+      //   interval = 0;
+      //   break;
     }
 
     if (recurrenceEndType == 'none') {
@@ -208,32 +211,22 @@ class _CalendarViewPageState extends State<CalendarViewPage> {
     }
 
     if (recurrenceEndType == 'never') {
-      DateTime farFutureDate = DateTime(2050); // Set to a very far future date
+      // La tâche doit être créée une seule fois à la date de début
+      DateTime normalizedRecurringDate = DateTime(recurringDate.year, recurringDate.month, recurringDate.day);
 
-      while (recurringDate.isBefore(farFutureDate)) {
-        if (occurrencesCount == 0) {
-          recurringDate = recurringDate.add(Duration(days: 1)); // Skip the first day
-        }
-
-        DateTime normalizedRecurringDate = DateTime(recurringDate.year, recurringDate.month, recurringDate.day);
-
-        if (!events.containsKey(normalizedRecurringDate)) {
-          events[normalizedRecurringDate] = [];
-        }
-
-        events[normalizedRecurringDate]?.add({
-          'title': taskTitle,
-          'description': taskDescription,
-          'dueTime': dueTime,
-          'type': 'recurring',
-          'recurrence': 'Recurring task',
-        });
-
-        print('Recurring event added: $taskTitle $normalizedRecurringDate');
-
-        recurringDate = recurringDate.add(Duration(days: interval)); // Add the interval
-        occurrencesCount++; // Increase occurrences count
+      if (!events.containsKey(normalizedRecurringDate)) {
+        events[normalizedRecurringDate] = [];
       }
+
+      events[normalizedRecurringDate]?.add({
+        'title': taskTitle,
+        'description': taskDescription,
+        'dueTime': dueTime,
+        'type': 'recurring',
+        'recurrence': 'Recurring task',
+      });
+
+      print('Recurring event added once: $taskTitle $normalizedRecurringDate');
 
       print("‘never’ recurrence ended");
     }
