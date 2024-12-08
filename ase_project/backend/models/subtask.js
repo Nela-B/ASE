@@ -14,12 +14,12 @@ const subTaskSchema = new mongoose.Schema({
   filePaths: [String],
   notify: { type: Boolean, default: false },
   frequency: { type: String, enum: ['daily', 'weekly', 'monthly', 'yearly', 'custom','none'], default: 'none' },
-  interval: { type: Number },
+  interval: { type: Number, default: 0 },
   byDay: { type: [String] },
-  byMonthDay: { type: Number },
+  byMonthDay: { type: Number, default: 0 },
   recurrenceEndType: { type: String, enum: ['never', 'date', 'occurrences'], default: 'never' },
   recurrenceEndDate: { type: Date },
-  maxOccurrences: { type: Number },
+  maxOccurrences: { type: Number, default: 0 },
   points: { type: Number, default: 0 }
 });
 
